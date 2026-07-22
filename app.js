@@ -19,53 +19,66 @@ const db = getFirestore(app);
 // DOM Elements
 const loginScreen = document.getElementById('login-screen');
 const appScreen = document.getElementById('app-screen');
-const loginEmailEl = document.getElementById('login-email');
-const loginPasswordEl = document.getElementById('login-password');
-const btnLogin = document.getElementById('btn-login');
-const btnRegister = document.getElementById('btn-register');
 const loginError = document.getElementById('login-error');
-const btnLogout = document.getElementById('btn-logout');
-
-const userNameEl = document.getElementById('user-name');
-const userAvatarEl = document.getElementById('user-avatar');
-const greetingEl = document.getElementById('greeting');
-const headerSubtitle = document.getElementById('header-subtitle');
 const taskListEl = document.getElementById('task-list');
-const sidebarItems = document.querySelectorAll('.nav-item');
+const sidebar = document.getElementById('sidebar');
 
+// Modal Form Elements
 const modal = document.getElementById('modal');
-const btnAddTask = document.getElementById('btn-add-task');
-const btnCancel = document.getElementById('btn-cancel');
-const btnSave = document.getElementById('btn-save');
+const inputCategory = document.getElementById('input-category');
+const fieldMapel = document.getElementById('field-mapel');
+const fieldOrgDuration = document.getElementById('field-org-duration');
+const inputDurasiOrg = document.getElementById('input-durasi-org');
+const blockTimeSingle = document.getElementById('block-time-single');
+const blockTimeMulti = document.getElementById('block-time-multi');
 
 let currentUser = null;
-let allTasks = []; // Menyimpan semua data kegiatan di memory
-let currentFilter = { type: 'status', value: 'all' }; // Filter default
+let allTasks = [];
+let currentFilter = { type: 'status', value: 'all' };
 
-// Minta izin notifikasi browser
-function requestNotificationPermission() {
-  if ("Notification" in window && Notification.permission !== "granted") {
-    Notification.requestPermission();
+// Toggle Sidebar Minimize
+document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
+  sidebar.classList.toggle('minimized');
+});
+
+// Dinamisasi Form Kategori & Durasi (UI Logic)
+inputCategory.addEventListener('change', (e) => {
+  const cat = e.target.value;
+  fieldMapel.style.display = (cat === 'PR') ? 'flex' : 'none';
+  fieldOrgDuration.style.display = (cat === 'Organisasi') ? 'flex' : 'none';
+  
+  if (cat !== 'Organisasi') {
+    blockTimeSingle.style.display = 'block';
+    blockTimeMulti.style.display = 'none';
+  } else {
+    inputDurasiOrg.dispatchEvent(new Event('change'));
   }
-}
+});
 
-// Auth Listener
+inputDurasiOrg.addEventListener('change', (e) => {
+  if (e.target.value === 'multi') {
+    blockTimeSingle.style.display = 'none';
+    blockTimeMulti.style.display = 'block';
+  } else {
+    blockTimeSingle.style.display = 'block';
+    blockTimeMulti.style.display = 'none';
+  }
+});
+
+// Auth Listener & Realtime Database Setup (Mirip sebelumnya)
 onAuthStateChanged(auth, (user) => {
   if (user) {
     currentUser = user;
     loginScreen.classList.remove('active');
     appScreen.classList.add('active');
-    requestNotificationPermission(); // Minta izin notifikasi saat login
     
-    const nameFromEmail = user.email.split("@")[0];
-    const displayName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
+    if ("Notification" in window && Notification.permission !== "granted") Notification.requestPermission();
     
-    userNameEl.textContent = displayName;
-    userAvatarEl.src = `https://ui-avatars.com/api/?name=${displayName}&background=8a9e86&color=fff&bold=true`;
-    greetingEl.textContent = `Halo, ${displayName}!`;
+    const displayName = user.email.split("@")[0];
+    document.getElementById('user-name').textContent = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+    document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${displayName}&background=8a9e86&color=fff&bold=true`;
     
     fetchTasksFromDB();
-    startNotificationChecker();
   } else {
     currentUser = null;
     appScreen.classList.remove('active');
@@ -73,95 +86,99 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// Login & Register & Logout
-btnLogin.addEventListener('click', async () => {
-  loginError.textContent = '';
-  try { await signInWithEmailAndPassword(auth, loginEmailEl.value, loginPasswordEl.value); } 
-  catch (error) { loginError.textContent = 'Gagal login: Periksa kembali datamu.'; }
+// Login & Logout Handlers
+document.getElementById('btn-login').addEventListener('click', async () => {
+  try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } 
+  catch (error) { loginError.textContent = 'Gagal login: Periksa kembali.'; }
 });
-btnRegister.addEventListener('click', async () => {
-  loginError.textContent = '';
-  if(loginPasswordEl.value.length < 6) return loginError.textContent = 'Password min 6 karakter!';
-  try {
-    await createUserWithEmailAndPassword(auth, loginEmailEl.value, loginPasswordEl.value);
-    alert('Akun berhasil dibuat!');
-  } catch (error) { loginError.textContent = 'Gagal daftar: Email mungkin sudah ada.'; }
+document.getElementById('btn-register').addEventListener('click', async () => {
+  try { await createUserWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } 
+  catch (error) { loginError.textContent = 'Gagal daftar.'; }
 });
-btnLogout.addEventListener('click', () => signOut(auth));
+document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
-// Mengelola Klik di Sidebar (Filter)
-sidebarItems.forEach(item => {
+// Sidebar Filters
+document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
-    // Hapus class active dari semua menu, tambahkan ke yg diklik
-    sidebarItems.forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     item.classList.add('active');
-    
-    // Set filter aktif
-    currentFilter.type = item.getAttribute('data-filter');
-    currentFilter.value = item.getAttribute('data-value');
-    
-    // Ubah teks sub-header
-    headerSubtitle.textContent = `Menampilkan kategori: ${item.textContent}`;
-    
-    // Render ulang UI
+    currentFilter = { type: item.getAttribute('data-filter'), value: item.getAttribute('data-value') };
+    document.getElementById('header-subtitle').textContent = `Menampilkan kategori: ${item.querySelector('span').textContent}`;
     renderTasks();
   });
 });
 
-// Modal Controls
-btnAddTask.addEventListener('click', () => { clearForm(); modal.classList.add('active'); });
-btnCancel.addEventListener('click', () => modal.classList.remove('active'));
+// Buka Tutup Modal
+document.getElementById('btn-add-task').addEventListener('click', () => {
+  document.getElementById('input-title').value = '';
+  inputCategory.value = 'Umum';
+  inputCategory.dispatchEvent(new Event('change'));
+  modal.classList.add('active');
+});
+document.getElementById('btn-cancel').addEventListener('click', () => modal.classList.remove('active'));
 
-// Simpan Kegiatan
-btnSave.addEventListener('click', async () => {
+// PERBAIKAN BUG SIMPAN KEGIATAN
+document.getElementById('btn-save').addEventListener('click', async () => {
+  const btnSave = document.getElementById('btn-save');
   const title = document.getElementById('input-title').value;
-  const date = document.getElementById('input-date').value;
-  const category = document.getElementById('input-category').value;
-  const timeStart = document.getElementById('input-time-start').value;
-  const timeEnd = document.getElementById('input-time-end').value;
+  const category = inputCategory.value;
 
-  if(!title || !date || !timeStart || !timeEnd) return alert('Lengkapi semua data!');
+  if (!title) return alert('Mohon isi Nama/Judul Kegiatan!');
+
+  let payload = {
+    uid: currentUser.uid,
+    title: title,
+    category: category,
+    completed: false,
+    notified: false,
+    createdAt: new Date()
+  };
+
+  // Validasi dinamis sesuai UI yang tampil
+  if (category === 'PR') {
+    payload.mapel = document.getElementById('input-mapel').value;
+  }
+
+  if (category === 'Organisasi' && inputDurasiOrg.value === 'multi') {
+    payload.dateStart = document.getElementById('input-date-start-multi').value;
+    payload.dateEnd = document.getElementById('input-date-end-multi').value;
+    payload.timeStart = document.getElementById('input-time-multi').value;
+    payload.isMultiDay = true;
+    if(!payload.dateStart || !payload.dateEnd || !payload.timeStart) return alert('Lengkapi tanggal dan jam!');
+  } else {
+    // Berlaku untuk Umum, PR, dan Organisasi (1 Hari)
+    payload.date = document.getElementById('input-date-single').value;
+    payload.timeStart = document.getElementById('input-time-start').value;
+    payload.timeEnd = document.getElementById('input-time-end').value;
+    payload.isMultiDay = false;
+    if(!payload.date || !payload.timeStart || !payload.timeEnd) return alert('Lengkapi tanggal dan jam!');
+  }
 
   try {
     btnSave.textContent = "Menyimpan...";
-    await addDoc(collection(db, "tasks"), {
-      uid: currentUser.uid,
-      title, date, category, timeStart, timeEnd,
-      completed: false,
-      notified: false, // Flag agar notif tidak muncul berulang kali
-      createdAt: new Date()
-    });
+    await addDoc(collection(db, "tasks"), payload);
     modal.classList.remove('active');
-  } catch (error) { console.error(error); }
-  finally { btnSave.textContent = "Simpan"; }
+  } catch (error) { 
+    alert("Terjadi kesalahan sistem saat menyimpan.");
+    console.error(error); 
+  } finally { 
+    btnSave.textContent = "Simpan"; 
+  }
 });
 
-function clearForm() {
-  document.getElementById('input-title').value = '';
-  document.getElementById('input-date').value = '';
-  document.getElementById('input-time-start').value = '';
-  document.getElementById('input-time-end').value = '';
-}
-
-// Mengambil Data dari Firebase secara Realtime
 function fetchTasksFromDB() {
   const q = query(collection(db, "tasks"), where("uid", "==", currentUser.uid), orderBy("createdAt", "desc"));
   onSnapshot(q, (snapshot) => {
     allTasks = [];
-    snapshot.forEach(docSnap => {
-      allTasks.push({ id: docSnap.id, ...docSnap.data() });
-    });
-    renderTasks(); // Render setelah data ditarik
+    snapshot.forEach(docSnap => { allTasks.push({ id: docSnap.id, ...docSnap.data() }); });
+    renderTasks();
   });
 }
 
-// Fungsi Merender Data sesuai Filter Aktif
 function renderTasks() {
   taskListEl.innerHTML = '';
-  
   let filteredTasks = allTasks;
 
-  // Logika Filter
   if (currentFilter.type === 'status') {
     if (currentFilter.value === 'pending') filteredTasks = allTasks.filter(t => !t.completed);
     if (currentFilter.value === 'completed') filteredTasks = allTasks.filter(t => t.completed);
@@ -170,31 +187,42 @@ function renderTasks() {
   }
 
   if (filteredTasks.length === 0) {
-    taskListEl.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:13px; margin-top:20px;">Tidak ada kegiatan di kategori ini.</p>`;
+    taskListEl.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:13px; margin-top:20px;">Belum ada kegiatan di sini.</p>`;
     return;
   }
 
   filteredTasks.forEach(task => {
-    // Penanda warna khusus untuk Kategori PR dan Organisasi
     let badgeClass = '';
-    if(task.category === 'PR') badgeClass = 'badge-pr';
+    let extraInfo = '';
+    let timeDisplay = '';
+
+    if(task.category === 'PR') {
+      badgeClass = 'badge-pr';
+      extraInfo = `<span>📚 ${task.mapel}</span>`;
+    }
     if(task.category === 'Organisasi') badgeClass = 'badge-org';
 
+    if (task.isMultiDay) {
+      timeDisplay = `<span>📅 ${task.dateStart} s/d ${task.dateEnd}</span> <span>⏰ Jam Kumpul: ${task.timeStart}</span>`;
+    } else {
+      timeDisplay = `<span>📅 ${task.date}</span> <span>⏰ ${task.timeStart} - ${task.timeEnd}</span>`;
+    }
+
     const card = document.createElement('div');
-    card.className = `task-card ${task.completed ? 'completed' : ''}`;
+    card.className = `task-card glass-panel ${task.completed ? 'completed' : ''}`;
     card.innerHTML = `
       <div class="task-info">
         <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
         <div class="task-details">
           <h3>${task.title}</h3>
           <div class="task-meta">
-            <span>📅 ${task.date}</span>
-            <span>⏰ ${task.timeStart} - ${task.timeEnd}</span>
+            ${timeDisplay}
             <span class="${badgeClass}">${task.category}</span>
+            ${extraInfo}
           </div>
         </div>
       </div>
-      <button class="btn-delete">Hapus</button>
+      <button class="btn-delete"><i class="ph ph-trash"></i></button>
     `;
 
     card.querySelector('.task-checkbox').addEventListener('change', async (e) => {
@@ -202,39 +230,9 @@ function renderTasks() {
     });
 
     card.querySelector('.btn-delete').addEventListener('click', async () => {
-      if(confirm(`Hapus kegiatan: ${task.title}?`)) {
-        await deleteDoc(doc(db, "tasks", task.id));
-      }
+      if(confirm(`Hapus kegiatan ini?`)) await deleteDoc(doc(db, "tasks", task.id));
     });
 
     taskListEl.appendChild(card);
   });
-}
-
-// Sistem Pengecekan Notifikasi (Berjalan setiap 1 Menit)
-function startNotificationChecker() {
-  setInterval(() => {
-    if (Notification.permission === "granted") {
-      const now = new Date();
-      
-      allTasks.forEach(async (task) => {
-        if (!task.completed && !task.notified) {
-          // Gabungkan tanggal dan waktu mulai menjadi objek Date
-          const taskDateTime = new Date(`${task.date}T${task.timeStart}`);
-          // Hitung selisih waktu dalam menit
-          const diffMinutes = (taskDateTime - now) / 1000 / 60;
-          
-          // Jika waktunya tersisa antara 0 sampai 30 menit
-          if (diffMinutes > 0 && diffMinutes <= 30) {
-            new Notification("Pengingat Jadwal!", {
-              body: `Kegiatan [${task.category}] "${task.title}" akan dimulai dalam ${Math.round(diffMinutes)} menit.`,
-            });
-            
-            // Update database agar tidak dikirimi notifikasi terus-menerus
-            await updateDoc(doc(db, "tasks", task.id), { notified: true });
-          }
-        }
-      });
-    }
-  }, 60000); // 60000 ms = 1 menit
 }
