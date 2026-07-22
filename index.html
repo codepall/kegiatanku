@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jadwal | Premium Sage</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Font Poppins untuk kesan mahal -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -15,7 +14,15 @@
     <div class="login-card">
       <h1>JadwalKu.</h1>
       <p>Kelola waktumu dengan elegan.</p>
-      <button id="btn-login" class="btn-primary">Login dengan Google</button>
+      
+      <input type="email" id="login-email" placeholder="Email" required>
+      <input type="password" id="login-password" placeholder="Password" required>
+      
+      <div class="login-actions">
+        <button id="btn-login" class="btn-primary">Login</button>
+        <button id="btn-register" class="btn-secondary">Daftar</button>
+      </div>
+      <p id="login-error"></p>
     </div>
   </div>
 
@@ -42,14 +49,14 @@
     <main class="content">
       <header>
         <div>
-          <h1 id="greeting">Halo, Naufal!</h1>
+          <h1 id="greeting">Halo!</h1>
           <p>Berikut adalah jadwalmu hari ini.</p>
         </div>
         <button id="btn-add-task" class="btn-primary">+ Kegiatan Baru</button>
       </header>
 
       <div class="task-container" id="task-list">
-        <!-- Kegiatan akan dirender di sini via JS -->
+        <!-- Kegiatan dirender via JS -->
       </div>
     </main>
   </div>
@@ -80,7 +87,6 @@
     </div>
   </div>
 
-  <!-- Firebase Scripts (Module) -->
   <script type="module" src="app.js"></script>
 </body>
 </html>
