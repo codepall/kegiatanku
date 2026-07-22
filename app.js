@@ -24,7 +24,12 @@ let userCategories = [
 let currentUser = null;
 let allTasks = [];
 let currentFilter = { type: 'status', value: 'all' };
-let editCatMode = null; // Menyimpan nama kategori original yg sedang diedit
+let editCatMode = null;
+
+// Cek dan Minimalkan Sidebar Jika Layar adalah Mobile
+if (window.innerWidth <= 768) {
+  document.getElementById('sidebar').classList.add('minimized');
+}
 
 async function loadUserSettings() {
   const docSnap = await getDoc(doc(db, "userSettings", currentUser.uid));
@@ -62,7 +67,6 @@ function applyCategoriesToUI() {
   `).join('');
 }
 
-// Reset Form Pengaturan
 function resetCatForm() {
   editCatMode = null;
   document.getElementById('set-cat-name').value = '';
@@ -72,10 +76,8 @@ function resetCatForm() {
   document.getElementById('btn-cancel-edit-cat').style.display = 'none';
 }
 
-// Fitur Batal Edit
 document.getElementById('btn-cancel-edit-cat').addEventListener('click', resetCatForm);
 
-// Menyimpan & Update Kategori
 document.getElementById('btn-save-cat').addEventListener('click', async () => {
   const name = document.getElementById('set-cat-name').value.trim();
   if(!name) return alert("Nama Kategori tidak boleh kosong!");
@@ -92,19 +94,14 @@ document.getElementById('btn-save-cat').addEventListener('click', async () => {
   };
 
   if (editCatMode) {
-    // Mode Update
     const idx = userCategories.findIndex(c => c.name === editCatMode);
     if(idx >= 0) userCategories[idx] = newCat;
     
-    // Auto-update kategori di kegiatan yang sudah tersimpan agar tidak hilang!
     if (editCatMode !== name) {
       const tasksToUpdate = allTasks.filter(t => t.category === editCatMode);
-      for (const t of tasksToUpdate) {
-        await updateDoc(doc(db, "tasks", t.id), { category: name });
-      }
+      for (const t of tasksToUpdate) await updateDoc(doc(db, "tasks", t.id), { category: name });
     }
   } else {
-    // Mode Tambah Baru (atau menimpa jika nama sama persis)
     const existingIdx = userCategories.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
     if(existingIdx >= 0) userCategories[existingIdx] = newCat;
     else userCategories.push(newCat);
@@ -114,12 +111,11 @@ document.getElementById('btn-save-cat').addEventListener('click', async () => {
   await saveUserSettings();
 });
 
-// Fitur Klik List (Edit & Delete)
 document.getElementById('list-categories').addEventListener('click', async (e) => {
   const btnDel = e.target.closest('.btn-del-cat');
   const btnEdit = e.target.closest('.btn-edit-cat');
 
-  if(btnDel && confirm("Hapus kategori ini? (Catatan: Kegiatan yang sudah ada di kategori ini tidak akan terhapus, tapi tidak muncul di sidebar)")) {
+  if(btnDel && confirm("Hapus kategori ini? (Catatan: Kegiatan yg sudah ada di kategori ini tidak akan terhapus)")) {
     userCategories = userCategories.filter(c => c.name !== btnDel.getAttribute('data-name'));
     await saveUserSettings();
   }
@@ -205,13 +201,24 @@ function attachSidebarListeners() {
       document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
       item.classList.add('active');
       currentFilter = { type: item.getAttribute('data-filter'), value: item.getAttribute('data-value') };
-      if(window.innerWidth > 768) document.getElementById('header-subtitle').textContent = `Menampilkan: ${item.querySelector('.sidebar-text').textContent}`;
+      
+      // Update judul jika di Desktop
+      if(window.innerWidth > 768) {
+        document.getElementById('header-subtitle').textContent = `Menampilkan: ${item.querySelector('.sidebar-text').textContent}`;
+      } else {
+        // Auto minimize jika di Mobile setelah pilih menu
+        document.getElementById('sidebar').classList.add('minimized');
+      }
+      
       renderTasksUI();
     });
   });
 }
 
-document.getElementById('btn-toggle-sidebar').addEventListener('click', () => { if(window.innerWidth > 768) document.getElementById('sidebar').classList.toggle('minimized'); });
+// Logika Toggle Sidebar kini berlaku di semua perangkat
+document.getElementById('btn-toggle-sidebar').addEventListener('click', () => { 
+  document.getElementById('sidebar').classList.toggle('minimized'); 
+});
 
 document.getElementById('btn-save').addEventListener('click', async () => {
   const btnSave = document.getElementById('btn-save');
