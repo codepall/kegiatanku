@@ -141,3 +141,68 @@ header p { color: var(--text-muted); font-size: 13px; }
 .cat-info h5 { font-size: 13px; color: var(--sage-dark); margin-bottom: 2px; }
 .cat-info p { font-size: 10px; color: var(--text-muted); line-height: 1.4; }
 .btn-del-cat { background: #ffecec; border: none; color: #d9534f; width: 28px; height: 28px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+/* --- Tambahan Catatan & Tombol Aksi --- */
+textarea { resize: vertical; padding: 10px; border: 1px solid var(--sage-light); border-radius: 8px; font-size: 13px; outline: none; background: rgba(255,255,255,0.8); }
+textarea:focus { border-color: var(--sage-primary); }
+
+.task-actions { display: flex; gap: 8px; align-items: center; }
+.btn-finish { background: var(--sage-light); color: var(--sage-dark); border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 4px; }
+.btn-finish:hover { background: var(--sage-primary); color: var(--white); }
+.notes-display { font-size: 11px; color: var(--sage-dark); background: rgba(138, 158, 134, 0.1); padding: 8px 12px; border-radius: 8px; margin-top: 10px; font-style: italic; border-left: 3px solid var(--sage-primary); }
+
+/* --- OPTIMASI KHUSUS ANTARMUKA ANDROID / MOBILE (LEBIH KECIL & RAPI) --- */
+@media (max-width: 768px) {
+  body { font-size: 12px; }
+  
+  /* Pengecilan Skala Layout */
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; padding: 12px 16px; flex-direction: row; align-items: center; justify-content: space-between; border-right: none; border-bottom: 1px solid var(--glass-border); z-index: 10; }
+  .sidebar.minimized { width: 100%; padding: 12px 16px; } /* Abaikan minimize di mode HP agar tetap jadi navbar atas */
+  .sidebar-header { margin-bottom: 0; width: auto; }
+  .sidebar-header h2 { font-size: 16px; }
+  
+  /* Navbar di HP jadi mendatar (Horizontal Scroll) */
+  .nav-links { display: flex; flex-direction: row; overflow-x: auto; overflow-y: hidden; margin: 0 12px; white-space: nowrap; padding-bottom: 4px; }
+  .nav-label { display: none; } /* Sembunyikan label di HP agar hemat ruang */
+  .nav-item { margin-bottom: 0; margin-right: 8px; padding: 6px 12px; font-size: 11px; }
+  
+  .user-profile { display: none; } /* Sembunyikan profil di HP agar hemat ruang */
+
+  .content { padding: 16px; height: calc(100vh - 60px); }
+  header { margin-bottom: 16px; }
+  header h1 { font-size: 20px; margin-bottom: 2px; }
+  header p { font-size: 11px; }
+  
+  .btn-primary, .btn-secondary { font-size: 11px; padding: 8px 14px; }
+  
+  /* Card Kegiatan lebih ringkas */
+  .task-card { padding: 12px; align-items: flex-start; gap: 8px; flex-direction: column; }
+  .task-info { width: 100%; align-items: flex-start; gap: 12px; }
+  .task-checkbox { width: 18px; height: 18px; margin-top: 2px; }
+  .task-details { width: 100%; }
+  .task-details h3 { font-size: 13px; line-height: 1.3; margin-bottom: 6px; }
+  .task-meta { gap: 6px; }
+  .task-meta span { font-size: 9px; padding: 3px 6px; }
+  .notes-display { font-size: 10px; padding: 6px 10px; margin-top: 8px; }
+  
+  /* Aksi tombol dipindah ke bawah kanan */
+  .task-actions { width: 100%; justify-content: flex-end; margin-top: 4px; border-top: 1px dashed rgba(0,0,0,0.05); padding-top: 8px; }
+
+  /* Modal Form lebih padat */
+  .modal-content { padding: 16px; max-width: 92%; max-height: 90vh; overflow-y: auto;}
+  .modal-content h3 { font-size: 16px; margin-bottom: 12px; }
+  .input-group { margin-bottom: 8px; }
+  .input-group label { font-size: 9px; margin-bottom: 2px; }
+  .input-group input, .input-group select, textarea { font-size: 11px; padding: 8px; border-radius: 6px; }
+  .checkbox-grid { grid-template-columns: 1fr; gap: 6px; margin-bottom: 12px;}
+  .chk-label { font-size: 11px; }
+  .settings-list li { font-size: 11px; padding: 8px; }
+}
+
+/* --- Tambahan Tombol Edit --- */
+.cat-actions { display: flex; gap: 4px; }
+.btn-edit-cat { background: rgba(138, 158, 134, 0.2); border: none; color: var(--sage-dark); width: 28px; height: 28px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
+.btn-edit-cat:hover { background: var(--sage-primary); color: white; }
+.btn-del-cat { background: #ffecec; border: none; color: #d9534f; width: 28px; height: 28px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
+.btn-del-cat:hover { background: #d9534f; color: white; }
