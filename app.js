@@ -1,26 +1,32 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+// Mengimpor fungsi login menggunakan Email dan Password
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// 1. MASUKKAN CONFIG FIREBASE KAMU DI SINI
+// Config Firebase milikmu
 const firebaseConfig = {
-    apiKey: "AIzaSyDPsRwRf72xaQkSdGn89WdwA3sbJI2Z-z0",
-    authDomain: "kegiatanku-503210.firebaseapp.com",
-    projectId: "kegiatanku-503210",
-    storageBucket: "kegiatanku-503210.firebasestorage.app",
-    messagingSenderId: "603325028994",
-    appId: "1:603325028994:web:b6b123f304d8a69d32b29b"
-  };
+  apiKey: "AIzaSyDPsRwRf72xaQkSdGn89WdwA3sbJI2Z-z0",
+  authDomain: "kegiatanku-503210.firebaseapp.com",
+  projectId: "kegiatanku-503210",
+  storageBucket: "kegiatanku-503210.firebasestorage.app",
+  messagingSenderId: "603325028994",
+  appId: "1:603325028994:web:b6b123f304d8a69d32b29b"
+};
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
 
 // DOM Elements
 const loginScreen = document.getElementById('login-screen');
 const appScreen = document.getElementById('app-screen');
+const loginEmailEl = document.getElementById('login-email');
+const loginPasswordEl = document.getElementById('login-password');
 const btnLogin = document.getElementById('btn-login');
+const btnRegister = document.getElementById('btn-register');
+const loginError = document.getElementById('login-error');
 const btnLogout = document.getElementById('btn-logout');
+
 const userNameEl = document.getElementById('user-name');
 const userAvatarEl = document.getElementById('user-avatar');
 const greetingEl = document.getElementById('greeting');
@@ -40,9 +46,16 @@ onAuthStateChanged(auth, (user) => {
     currentUser = user;
     loginScreen.classList.remove('active');
     appScreen.classList.add('active');
-    userNameEl.textContent = user.displayName.split(" ")[0];
-    userAvatarEl.src = user.photoURL;
-    greetingEl.textContent = `Halo, ${user.displayName.split(" ")[0]}!`;
+    
+    // Mengambil nama dari email (contoh: naufal@gmail.com jadi "naufal")
+    const nameFromEmail = user.email.split("@")[0];
+    const displayName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
+    
+    userNameEl.textContent = displayName;
+    // Menggunakan API pihak ketiga untuk membuat avatar otomatis bergaya Sage Green
+    userAvatarEl.src = `https://ui-avatars.com/api/?name=${displayName}&background=8a9e86&color=fff`;
+    greetingEl.textContent = `Halo, ${displayName}!`;
+    
     loadTasks();
   } else {
     currentUser = null;
@@ -51,8 +64,32 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// Login & Logout
-btnLogin.addEventListener('click', () => signInWithPopup(auth, provider));
+// Sistem Login
+btnLogin.addEventListener('click', async () => {
+  loginError.textContent = '';
+  try {
+    await signInWithEmailAndPassword(auth, loginEmailEl.value, loginPasswordEl.value);
+  } catch (error) {
+    loginError.textContent = 'Gagal login: Email atau password salah!';
+  }
+});
+
+// Sistem Daftar (Register)
+btnRegister.addEventListener('click', async () => {
+  loginError.textContent = '';
+  if(loginPasswordEl.value.length < 6) {
+    loginError.textContent = 'Password minimal 6 karakter!';
+    return;
+  }
+  try {
+    await createUserWithEmailAndPassword(auth, loginEmailEl.value, loginPasswordEl.value);
+    alert('Akun berhasil dibuat! Selamat datang.');
+  } catch (error) {
+    loginError.textContent = 'Gagal daftar: Email mungkin sudah digunakan.';
+  }
+});
+
+// Logout
 btnLogout.addEventListener('click', () => signOut(auth));
 
 // Modal Controls
@@ -123,12 +160,10 @@ function loadTasks() {
         <button class="btn-delete">Hapus</button>
       `;
 
-      // Checkbox Toggle Completed
       card.querySelector('.task-checkbox').addEventListener('change', async (e) => {
         await updateDoc(doc(db, "tasks", taskId), { completed: e.target.checked });
       });
 
-      // Delete Task
       card.querySelector('.btn-delete').addEventListener('click', async () => {
         if(confirm('Hapus kegiatan ini?')) {
           await deleteDoc(doc(db, "tasks", taskId));
