@@ -6,16 +6,23 @@
   <title>Jadwal | Premium Sage</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 <body>
 
   <!-- Layar Login -->
   <div id="login-screen" class="screen active">
-    <div class="login-card">
+    <div class="login-card glass-panel">
       <h1>JadwalKu.</h1>
       <p>Kelola waktumu dengan elegan.</p>
-      <input type="email" id="login-email" placeholder="Email" required>
-      <input type="password" id="login-password" placeholder="Password" required>
+      <div class="input-group">
+        <label>Alamat Email</label>
+        <input type="email" id="login-email" placeholder="contoh@gmail.com" required>
+      </div>
+      <div class="input-group">
+        <label>Kata Sandi</label>
+        <input type="password" id="login-password" placeholder="Minimal 6 karakter" required>
+      </div>
       <div class="login-actions">
         <button id="btn-login" class="btn-primary">Login</button>
         <button id="btn-register" class="btn-secondary">Daftar</button>
@@ -26,25 +33,42 @@
 
   <!-- Layar Aplikasi -->
   <div id="app-screen" class="screen layout">
-    <aside class="sidebar">
+    <aside class="sidebar glass-panel" id="sidebar">
       <div class="sidebar-header">
-        <h2>JadwalKu</h2>
+        <div class="logo-area">
+          <i class="ph ph-calendar-check icon-logo"></i>
+          <h2 class="sidebar-text">JadwalKu</h2>
+        </div>
+        <button id="btn-toggle-sidebar" class="btn-icon"><i class="ph ph-list"></i></button>
       </div>
+      
       <ul class="nav-links" id="sidebar-nav">
-        <li class="nav-label">Status</li>
-        <li class="nav-item active" data-filter="status" data-value="all">Semua Kegiatan</li>
-        <li class="nav-item" data-filter="status" data-value="pending">Belum Selesai</li>
-        <li class="nav-item" data-filter="status" data-value="completed">Selesai</li>
+        <li class="nav-label sidebar-text">Status</li>
+        <li class="nav-item active" data-filter="status" data-value="all" title="Semua Kegiatan">
+          <i class="ph ph-files"></i> <span class="sidebar-text">Semua Kegiatan</span>
+        </li>
+        <li class="nav-item" data-filter="status" data-value="pending" title="Belum Selesai">
+          <i class="ph ph-clock"></i> <span class="sidebar-text">Belum Selesai</span>
+        </li>
+        <li class="nav-item" data-filter="status" data-value="completed" title="Selesai">
+          <i class="ph ph-check-circle"></i> <span class="sidebar-text">Selesai</span>
+        </li>
         
-        <li class="nav-label">Kategori</li>
-        <li class="nav-item" data-filter="category" data-value="PR">PR / Tugas</li>
-        <li class="nav-item" data-filter="category" data-value="Organisasi">Organisasi (PMR)</li>
-        <li class="nav-item" data-filter="category" data-value="Pribadi">Pribadi</li>
-        <li class="nav-item" data-filter="category" data-value="Tinkering">Tinkering</li>
+        <li class="nav-label sidebar-text">Kategori</li>
+        <li class="nav-item" data-filter="category" data-value="PR" title="PR / Tugas">
+          <i class="ph ph-book-open"></i> <span class="sidebar-text">PR / Tugas</span>
+        </li>
+        <li class="nav-item" data-filter="category" data-value="Organisasi" title="Organisasi">
+          <i class="ph ph-users"></i> <span class="sidebar-text">Organisasi</span>
+        </li>
+        <li class="nav-item" data-filter="category" data-value="Pribadi" title="Pribadi">
+          <i class="ph ph-user"></i> <span class="sidebar-text">Pribadi</span>
+        </li>
       </ul>
+
       <div class="user-profile">
         <img id="user-avatar" src="" alt="Avatar">
-        <div class="user-info">
+        <div class="user-info sidebar-text">
           <span id="user-name">Nama</span>
           <button id="btn-logout">Logout</button>
         </div>
@@ -68,25 +92,91 @@
     </main>
   </div>
 
-  <!-- Modal Tambah Kegiatan -->
+  <!-- Modal Tambah Kegiatan (Frosted Glass) -->
   <div id="modal" class="modal">
-    <div class="modal-content">
-      <h3>Tambah Kegiatan Baru</h3>
-      <input type="text" id="input-title" placeholder="Nama Kegiatan" required>
-      <div class="form-row">
-        <input type="date" id="input-date" required>
-        <select id="input-category">
-          <option value="PR">PR / Tugas</option>
-          <option value="Organisasi">Organisasi (PMR)</option>
-          <option value="Pribadi">Pribadi</option>
-          <option value="Tinkering">Tinkering / Ngoding</option>
-        </select>
+    <div class="modal-content glass-panel">
+      <h3>Buat Kegiatan Baru</h3>
+      
+      <div class="input-group">
+        <label>Nama / Judul Kegiatan</label>
+        <input type="text" id="input-title" placeholder="Contoh: Rapat PMR atau Mengerjakan LKS" required>
       </div>
+
       <div class="form-row">
-        <input type="time" id="input-time-start" required>
-        <span>s/d</span>
-        <input type="time" id="input-time-end" required>
+        <div class="input-group w-50">
+          <label>Kategori</label>
+          <select id="input-category">
+            <option value="Umum">Umum / Pribadi</option>
+            <option value="PR">PR / Tugas Sekolah</option>
+            <option value="Organisasi">Organisasi</option>
+          </select>
+        </div>
+
+        <!-- Opsi Ekstra Kategori PR -->
+        <div class="input-group w-50" id="field-mapel" style="display: none;">
+          <label>Mata Pelajaran</label>
+          <select id="input-mapel">
+            <option value="BIN">Bahasa Indonesia</option>
+            <option value="BK">Bimbingan Konseling</option>
+            <option value="BIG">Bahasa Inggris</option>
+            <option value="IPS">IPS</option>
+            <option value="PPKn">PPKn</option>
+            <option value="Informatika">Informatika</option>
+            <option value="IPA">IPA</option>
+            <option value="MAT">Matematika</option>
+            <option value="BJ">Bahasa Jawa</option>
+            <option value="SB">Seni Budaya</option>
+            <option value="PAI">PAI</option>
+            <option value="PJOK">PJOK</option>
+          </select>
+        </div>
+
+        <!-- Opsi Ekstra Kategori Organisasi -->
+        <div class="input-group w-50" id="field-org-duration" style="display: none;">
+          <label>Durasi Kegiatan</label>
+          <select id="input-durasi-org">
+            <option value="1">1 Hari Saja</option>
+            <option value="multi">Beberapa Hari</option>
+          </select>
+        </div>
       </div>
+
+      <!-- Blok Waktu Default (1 Hari) -->
+      <div id="block-time-single">
+        <div class="input-group">
+          <label>Pilih Tanggal</label>
+          <input type="date" id="input-date-single">
+        </div>
+        <div class="form-row">
+          <div class="input-group w-50">
+            <label>Jam Mulai</label>
+            <input type="time" id="input-time-start">
+          </div>
+          <div class="input-group w-50">
+            <label>Jam Selesai</label>
+            <input type="time" id="input-time-end">
+          </div>
+        </div>
+      </div>
+
+      <!-- Blok Waktu Multi-Hari (Khusus Organisasi) -->
+      <div id="block-time-multi" style="display: none;">
+        <div class="form-row">
+          <div class="input-group w-50">
+            <label>Tanggal Mulai</label>
+            <input type="date" id="input-date-start-multi">
+          </div>
+          <div class="input-group w-50">
+            <label>Tanggal Selesai</label>
+            <input type="date" id="input-date-end-multi">
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Jam Mulai Kegiatan (Tiap Hari)</label>
+          <input type="time" id="input-time-multi">
+        </div>
+      </div>
+
       <div class="modal-actions">
         <button id="btn-cancel" class="btn-secondary">Batal</button>
         <button id="btn-save" class="btn-primary">Simpan</button>
