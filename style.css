@@ -186,3 +186,30 @@ header p { color: var(--text-muted); }
 }
 .form-row { display: flex; gap: 12px; align-items: center; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; }
+
+/* --- Tambahan Style untuk Form Login Email/Password --- */
+.login-card input[type="email"], 
+.login-card input[type="password"] {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--sage-light);
+  border-radius: 10px;
+  outline: none;
+  font-family: 'Poppins', sans-serif;
+}
+.login-card input:focus {
+  border-color: var(--sage-primary);
+}
+.login-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 12px;
+}
+#login-error {
+  color: #d9534f;
+  font-size: 12px;
+  margin-top: 12px;
+  min-height: 18px;
+}
