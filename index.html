@@ -43,7 +43,6 @@
       </div>
       
       <ul class="nav-links" id="sidebar-nav">
-        <!-- Status Default -->
         <li class="nav-label sidebar-text">Status</li>
         <li class="nav-item active" data-filter="status" data-value="all" title="Semua Kegiatan">
           <i class="ph ph-files"></i> <span class="sidebar-text">Semua Kegiatan</span>
@@ -55,11 +54,9 @@
           <i class="ph ph-check-circle"></i> <span class="sidebar-text">Selesai</span>
         </li>
         
-        <!-- Kategori Dinamis (Dirender via JS) -->
         <li class="nav-label sidebar-text">Kategori</li>
         <div id="dynamic-categories-sidebar"></div>
 
-        <!-- Pengaturan -->
         <li class="nav-label sidebar-text" style="margin-top:20px;">Opsi</li>
         <li class="nav-item" id="btn-open-settings" title="Pengaturan">
           <i class="ph ph-gear"></i> <span class="sidebar-text">Atur Kategori</span>
@@ -84,10 +81,7 @@
           </div>
           <button id="btn-add-task" class="btn-primary">+ Kegiatan</button>
         </header>
-
-        <div class="task-container" id="task-list">
-          <!-- Kegiatan dirender via JS -->
-        </div>
+        <div class="task-container" id="task-list"></div>
       </div>
     </main>
   </div>
@@ -98,8 +92,8 @@
       <h3>Buat Kegiatan Baru</h3>
       
       <div class="input-group">
-        <label>Nama / Judul Kegiatan</label>
-        <input type="text" id="input-title" placeholder="Contoh: Rapat PMR" required>
+        <label>Judul Kegiatan</label>
+        <input type="text" id="input-title" placeholder="Contoh: Rapat Evaluasi atau LKS Hal 12" required>
       </div>
 
       <div class="form-row">
@@ -107,44 +101,36 @@
           <label>Kategori</label>
           <select id="input-category"></select>
         </div>
-
-        <div class="input-group w-50" id="field-mapel" style="display: none;">
-          <label>Mata Pelajaran</label>
-          <select id="input-mapel"></select>
-        </div>
-
-        <div class="input-group w-50" id="field-org-sub" style="display: none;">
-          <label>Organisasi</label>
-          <select id="input-sub-org"></select>
+        <div class="input-group w-50" id="field-sub-category" style="display: none;">
+          <label>Sub Kategori</label>
+          <select id="input-sub-category"></select>
         </div>
       </div>
 
-      <div class="input-group" id="field-org-duration" style="display: none;">
-        <label>Durasi Kegiatan</label>
-        <select id="input-durasi-org">
-          <option value="1">1 Hari Saja</option>
-          <option value="multi">Beberapa Hari</option>
-        </select>
+      <!-- Wadah Input Dinamis -->
+      <div class="input-group" id="field-default-date" style="display: none;">
+        <label>Tanggal Kegiatan</label>
+        <input type="date" id="val-default-date">
       </div>
 
-      <!-- Single / Multi Time Blocks -->
-      <div id="block-time-single">
-        <div class="input-group">
-          <label id="label-date-single">Tanggal Kegiatan</label>
-          <input type="date" id="input-date-single">
-        </div>
-        <div class="form-row" id="time-start-end-container">
-          <div class="input-group w-50"><label>Jam Mulai</label><input type="time" id="input-time-start"></div>
-          <div class="input-group w-50"><label>Jam Selesai</label><input type="time" id="input-time-end"></div>
-        </div>
+      <div class="form-row" id="field-long-date" style="display: none;">
+        <div class="input-group w-50"><label>Tgl Mulai</label><input type="date" id="val-date-start"></div>
+        <div class="input-group w-50"><label>Tgl Selesai</label><input type="date" id="val-date-end"></div>
       </div>
 
-      <div id="block-time-multi" style="display: none;">
-        <div class="form-row">
-          <div class="input-group w-50"><label>Tgl Mulai</label><input type="date" id="input-date-start-multi"></div>
-          <div class="input-group w-50"><label>Tgl Selesai</label><input type="date" id="input-date-end-multi"></div>
-        </div>
-        <div class="input-group"><label>Jam Kumpul</label><input type="time" id="input-time-multi"></div>
+      <div class="input-group" id="field-deadline" style="display: none;">
+        <label>Tanggal Deadline</label>
+        <input type="date" id="val-date-deadline">
+      </div>
+
+      <div class="form-row" id="field-time-range" style="display: none;">
+        <div class="input-group w-50"><label>Jam Mulai</label><input type="time" id="val-time-start"></div>
+        <div class="input-group w-50"><label>Jam Selesai</label><input type="time" id="val-time-end"></div>
+      </div>
+
+      <div class="input-group" id="field-start-time" style="display: none;">
+        <label>Jam Mulai Kegiatan</label>
+        <input type="time" id="val-time-only">
       </div>
 
       <div class="modal-actions">
@@ -154,41 +140,38 @@
     </div>
   </div>
 
-  <!-- Modal Pengaturan -->
+  <!-- Modal Pengaturan Kategori -->
   <div id="modal-settings" class="modal">
     <div class="modal-content glass-panel" style="max-height: 85vh; overflow-y: auto;">
-      <h3>Atur Kategori & Label</h3>
+      <h3>Pengaturan Kategori Custom</h3>
       
-      <div class="settings-section">
-        <h4>Kategori Utama (Contoh: PR, Organisasi)</h4>
-        <p class="settings-hint">*Jika kamu membuat kategori bernama "PR" atau "Organisasi", fitur spesial akan otomatis aktif.</p>
-        <div class="form-row">
-          <input type="text" id="new-cat" placeholder="Tambah Kategori">
-          <button id="btn-add-cat" class="btn-primary">+</button>
+      <div class="settings-form">
+        <div class="input-group">
+          <label>Nama Kategori Utama</label>
+          <input type="text" id="set-cat-name" placeholder="Misal: Proyek Pribadi">
         </div>
-        <ul id="list-cat" class="settings-list"></ul>
+        <div class="input-group">
+          <label>Sub Kategori (Pisahkan dgn Koma)</label>
+          <input type="text" id="set-sub-cat" placeholder="Misal: Desain, Coding (Kosongi jika tidak ada)">
+        </div>
+
+        <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; display: block;">Aktifkan Opsi Input:</label>
+        <div class="checkbox-grid">
+          <label class="chk-label"><input type="checkbox" id="chk-longdate"> Tgl Panjang</label>
+          <label class="chk-label"><input type="checkbox" id="chk-timerange"> Lama Waktu</label>
+          <label class="chk-label"><input type="checkbox" id="chk-deadline"> Deadline</label>
+          <label class="chk-label"><input type="checkbox" id="chk-starttime"> Jam Mulai</label>
+        </div>
+        <button id="btn-save-cat" class="btn-primary" style="width:100%; margin-top: 16px;">Simpan Kategori</button>
       </div>
 
-      <div class="settings-section">
-        <h4>Mata Pelajaran (Khusus Kategori "PR")</h4>
-        <div class="form-row">
-          <input type="text" id="new-mapel" placeholder="Tambah Mapel">
-          <button id="btn-add-mapel" class="btn-primary">+</button>
-        </div>
-        <ul id="list-mapel" class="settings-list"></ul>
-      </div>
+      <hr style="border: 0; border-top: 1px dashed var(--sage-light); margin: 24px 0;">
 
-      <div class="settings-section">
-        <h4>Sub-Organisasi</h4>
-        <div class="form-row">
-          <input type="text" id="new-org" placeholder="Tambah Organisasi">
-          <button id="btn-add-org" class="btn-primary">+</button>
-        </div>
-        <ul id="list-org" class="settings-list"></ul>
-      </div>
-
-      <div class="modal-actions">
-        <button id="btn-close-settings" class="btn-primary">Selesai</button>
+      <h4>Kategori Tersimpan</h4>
+      <ul id="list-categories" class="settings-list"></ul>
+      
+      <div class="modal-actions" style="margin-top:20px;">
+        <button id="btn-close-settings" class="btn-primary">Tutup</button>
       </div>
     </div>
   </div>
