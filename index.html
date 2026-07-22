@@ -44,13 +44,13 @@
       
       <ul class="nav-links" id="sidebar-nav">
         <li class="nav-label sidebar-text">Status</li>
-        <li class="nav-item active" data-filter="status" data-value="all" title="Semua Kegiatan">
+        <li class="nav-item active" data-filter="status" data-value="all">
           <i class="ph ph-files"></i> <span class="sidebar-text">Semua Kegiatan</span>
         </li>
-        <li class="nav-item" data-filter="status" data-value="pending" title="Belum Selesai">
+        <li class="nav-item" data-filter="status" data-value="pending">
           <i class="ph ph-clock"></i> <span class="sidebar-text">Belum Selesai</span>
         </li>
-        <li class="nav-item" data-filter="status" data-value="completed" title="Selesai">
+        <li class="nav-item" data-filter="status" data-value="completed">
           <i class="ph ph-check-circle"></i> <span class="sidebar-text">Selesai</span>
         </li>
         
@@ -58,7 +58,7 @@
         <div id="dynamic-categories-sidebar"></div>
 
         <li class="nav-label sidebar-text" style="margin-top:20px;">Opsi</li>
-        <li class="nav-item" id="btn-open-settings" title="Pengaturan">
+        <li class="nav-item" id="btn-open-settings">
           <i class="ph ph-gear"></i> <span class="sidebar-text">Atur Kategori</span>
         </li>
       </ul>
@@ -93,7 +93,7 @@
       
       <div class="input-group">
         <label>Judul Kegiatan</label>
-        <input type="text" id="input-title" placeholder="Contoh: Rapat Evaluasi atau LKS Hal 12" required>
+        <input type="text" id="input-title" placeholder="Contoh: Rapat PMR" required>
       </div>
 
       <div class="form-row">
@@ -107,7 +107,6 @@
         </div>
       </div>
 
-      <!-- Wadah Input Dinamis -->
       <div class="input-group" id="field-default-date" style="display: none;">
         <label>Tanggal Kegiatan</label>
         <input type="date" id="val-default-date">
@@ -133,6 +132,11 @@
         <input type="time" id="val-time-only">
       </div>
 
+      <div class="input-group">
+        <label>Catatan (Opsional)</label>
+        <textarea id="input-notes" rows="2" placeholder="Tulis catatan tambahan di sini..."></textarea>
+      </div>
+
       <div class="modal-actions">
         <button id="btn-cancel" class="btn-secondary">Batal</button>
         <button id="btn-save" class="btn-primary">Simpan</button>
@@ -152,7 +156,7 @@
         </div>
         <div class="input-group">
           <label>Sub Kategori (Pisahkan dgn Koma)</label>
-          <input type="text" id="set-sub-cat" placeholder="Misal: Desain, Coding (Kosongi jika tidak ada)">
+          <input type="text" id="set-sub-cat" placeholder="Misal: Desain, Coding">
         </div>
 
         <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; display: block;">Aktifkan Opsi Input:</label>
@@ -161,8 +165,12 @@
           <label class="chk-label"><input type="checkbox" id="chk-timerange"> Lama Waktu</label>
           <label class="chk-label"><input type="checkbox" id="chk-deadline"> Deadline</label>
           <label class="chk-label"><input type="checkbox" id="chk-starttime"> Jam Mulai</label>
+          <label class="chk-label"><input type="checkbox" id="chk-finishfast"> Selesaikan Cepat</label>
         </div>
-        <button id="btn-save-cat" class="btn-primary" style="width:100%; margin-top: 16px;">Simpan Kategori</button>
+        <div class="form-row" style="margin-top: 16px;">
+          <button id="btn-cancel-edit-cat" class="btn-secondary" style="display: none; flex-grow: 1;">Batal Edit</button>
+          <button id="btn-save-cat" class="btn-primary" style="flex-grow: 2;">Simpan Kategori</button>
+        </div>
       </div>
 
       <hr style="border: 0; border-top: 1px dashed var(--sage-light); margin: 24px 0;">
