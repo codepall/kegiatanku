@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jadwal | Premium Sage</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Font Poppins untuk kesan mahal -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Layar Login -->
+  <div id="login-screen" class="screen active">
+    <div class="login-card">
+      <h1>JadwalKu.</h1>
+      <p>Kelola waktumu dengan elegan.</p>
+      <button id="btn-login" class="btn-primary">Login dengan Google</button>
+    </div>
+  </div>
+
+  <!-- Layar Aplikasi -->
+  <div id="app-screen" class="screen layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>JadwalKu</h2>
+      </div>
+      <ul class="nav-links">
+        <li class="active">Semua Kegiatan</li>
+        <li>Selesai</li>
+        <li>Belum Selesai</li>
+      </ul>
+      <div class="user-profile">
+        <img id="user-avatar" src="" alt="Avatar">
+        <div class="user-info">
+          <span id="user-name">Nama</span>
+          <button id="btn-logout">Logout</button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header>
+        <div>
+          <h1 id="greeting">Halo, Naufal!</h1>
+          <p>Berikut adalah jadwalmu hari ini.</p>
+        </div>
+        <button id="btn-add-task" class="btn-primary">+ Kegiatan Baru</button>
+      </header>
+
+      <div class="task-container" id="task-list">
+        <!-- Kegiatan akan dirender di sini via JS -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal Tambah Kegiatan -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <h3>Tambah Kegiatan Baru</h3>
+      <input type="text" id="input-title" placeholder="Nama Kegiatan (Mengerjakan Tugas PMR)" required>
+      <div class="form-row">
+        <input type="date" id="input-date" required>
+        <select id="input-category">
+          <option value="Sekolah">Sekolah</option>
+          <option value="Organisasi">Organisasi (PMR/OSIS)</option>
+          <option value="Pribadi">Pribadi</option>
+          <option value="Tinkering">Tinkering / Ngoding</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <input type="time" id="input-time-start" required>
+        <span>sampai</span>
+        <input type="time" id="input-time-end" required>
+      </div>
+      <div class="modal-actions">
+        <button id="btn-cancel" class="btn-secondary">Batal</button>
+        <button id="btn-save" class="btn-primary">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase Scripts (Module) -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
