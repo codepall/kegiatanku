@@ -43,6 +43,7 @@
       </div>
       
       <ul class="nav-links" id="sidebar-nav">
+        <!-- Status Default -->
         <li class="nav-label sidebar-text">Status</li>
         <li class="nav-item active" data-filter="status" data-value="all" title="Semua Kegiatan">
           <i class="ph ph-files"></i> <span class="sidebar-text">Semua Kegiatan</span>
@@ -54,15 +55,14 @@
           <i class="ph ph-check-circle"></i> <span class="sidebar-text">Selesai</span>
         </li>
         
+        <!-- Kategori Dinamis (Dirender via JS) -->
         <li class="nav-label sidebar-text">Kategori</li>
-        <li class="nav-item" data-filter="category" data-value="PR" title="PR / Tugas">
-          <i class="ph ph-book-open"></i> <span class="sidebar-text">PR / Tugas</span>
-        </li>
-        <li class="nav-item" data-filter="category" data-value="Organisasi" title="Organisasi">
-          <i class="ph ph-users"></i> <span class="sidebar-text">Organisasi</span>
-        </li>
-        <li class="nav-item" data-filter="category" data-value="Pribadi" title="Pribadi">
-          <i class="ph ph-user"></i> <span class="sidebar-text">Pribadi</span>
+        <div id="dynamic-categories-sidebar"></div>
+
+        <!-- Pengaturan -->
+        <li class="nav-label sidebar-text" style="margin-top:20px;">Opsi</li>
+        <li class="nav-item" id="btn-open-settings" title="Pengaturan">
+          <i class="ph ph-gear"></i> <span class="sidebar-text">Atur Kategori</span>
         </li>
       </ul>
 
@@ -99,51 +99,26 @@
       
       <div class="input-group">
         <label>Nama / Judul Kegiatan</label>
-        <input type="text" id="input-title" placeholder="Contoh: Rapat PMR atau Mengerjakan LKS" required>
+        <input type="text" id="input-title" placeholder="Contoh: Rapat PMR" required>
       </div>
 
       <div class="form-row">
         <div class="input-group w-50">
           <label>Kategori</label>
-          <select id="input-category">
-            <option value="Umum">Umum / Pribadi</option>
-            <option value="PR">PR / Tugas Sekolah</option>
-            <option value="Organisasi">Organisasi</option>
-          </select>
+          <select id="input-category"></select>
         </div>
 
-        <!-- Ekstra PR -->
         <div class="input-group w-50" id="field-mapel" style="display: none;">
           <label>Mata Pelajaran</label>
-          <select id="input-mapel">
-            <option value="BIN">Bahasa Indonesia</option>
-            <option value="BK">Bimbingan Konseling</option>
-            <option value="BIG">Bahasa Inggris</option>
-            <option value="IPS">IPS</option>
-            <option value="PPKn">PPKn</option>
-            <option value="Informatika">Informatika</option>
-            <option value="IPA">IPA</option>
-            <option value="MAT">Matematika</option>
-            <option value="BJ">Bahasa Jawa</option>
-            <option value="SB">Seni Budaya</option>
-            <option value="PAI">PAI</option>
-            <option value="PJOK">PJOK</option>
-          </select>
+          <select id="input-mapel"></select>
         </div>
 
-        <!-- Ekstra Organisasi -->
         <div class="input-group w-50" id="field-org-sub" style="display: none;">
-          <label>Pilih Organisasi</label>
-          <select id="input-sub-org">
-            <option value="PMR">PMR</option>
-            <option value="OSIS">OSIS</option>
-            <option value="Kader Bank Sampah">Kader Bank Sampah</option>
-            <option value="Kader Keamanan Pangan">Kader Keamanan Pangan</option>
-          </select>
+          <label>Organisasi</label>
+          <select id="input-sub-org"></select>
         </div>
       </div>
 
-      <!-- Ekstra Durasi Organisasi -->
       <div class="input-group" id="field-org-duration" style="display: none;">
         <label>Durasi Kegiatan</label>
         <select id="input-durasi-org">
@@ -152,47 +127,68 @@
         </select>
       </div>
 
-      <!-- Blok Waktu Default (1 Hari & PR) -->
+      <!-- Single / Multi Time Blocks -->
       <div id="block-time-single">
         <div class="input-group">
           <label id="label-date-single">Tanggal Kegiatan</label>
           <input type="date" id="input-date-single">
         </div>
-        
-        <!-- Wadah Jam Mulai/Selesai agar bisa disembunyikan saat PR -->
         <div class="form-row" id="time-start-end-container">
-          <div class="input-group w-50">
-            <label>Jam Mulai</label>
-            <input type="time" id="input-time-start">
-          </div>
-          <div class="input-group w-50">
-            <label>Jam Selesai</label>
-            <input type="time" id="input-time-end">
-          </div>
+          <div class="input-group w-50"><label>Jam Mulai</label><input type="time" id="input-time-start"></div>
+          <div class="input-group w-50"><label>Jam Selesai</label><input type="time" id="input-time-end"></div>
         </div>
       </div>
 
-      <!-- Blok Waktu Multi-Hari (Khusus Organisasi) -->
       <div id="block-time-multi" style="display: none;">
         <div class="form-row">
-          <div class="input-group w-50">
-            <label>Tgl Mulai</label>
-            <input type="date" id="input-date-start-multi">
-          </div>
-          <div class="input-group w-50">
-            <label>Tgl Selesai</label>
-            <input type="date" id="input-date-end-multi">
-          </div>
+          <div class="input-group w-50"><label>Tgl Mulai</label><input type="date" id="input-date-start-multi"></div>
+          <div class="input-group w-50"><label>Tgl Selesai</label><input type="date" id="input-date-end-multi"></div>
         </div>
-        <div class="input-group">
-          <label>Jam Mulai Kegiatan (Tiap Hari)</label>
-          <input type="time" id="input-time-multi">
-        </div>
+        <div class="input-group"><label>Jam Kumpul</label><input type="time" id="input-time-multi"></div>
       </div>
 
       <div class="modal-actions">
         <button id="btn-cancel" class="btn-secondary">Batal</button>
         <button id="btn-save" class="btn-primary">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Pengaturan -->
+  <div id="modal-settings" class="modal">
+    <div class="modal-content glass-panel" style="max-height: 85vh; overflow-y: auto;">
+      <h3>Atur Kategori & Label</h3>
+      
+      <div class="settings-section">
+        <h4>Kategori Utama (Contoh: PR, Organisasi)</h4>
+        <p class="settings-hint">*Jika kamu membuat kategori bernama "PR" atau "Organisasi", fitur spesial akan otomatis aktif.</p>
+        <div class="form-row">
+          <input type="text" id="new-cat" placeholder="Tambah Kategori">
+          <button id="btn-add-cat" class="btn-primary">+</button>
+        </div>
+        <ul id="list-cat" class="settings-list"></ul>
+      </div>
+
+      <div class="settings-section">
+        <h4>Mata Pelajaran (Khusus Kategori "PR")</h4>
+        <div class="form-row">
+          <input type="text" id="new-mapel" placeholder="Tambah Mapel">
+          <button id="btn-add-mapel" class="btn-primary">+</button>
+        </div>
+        <ul id="list-mapel" class="settings-list"></ul>
+      </div>
+
+      <div class="settings-section">
+        <h4>Sub-Organisasi</h4>
+        <div class="form-row">
+          <input type="text" id="new-org" placeholder="Tambah Organisasi">
+          <button id="btn-add-org" class="btn-primary">+</button>
+        </div>
+        <ul id="list-org" class="settings-list"></ul>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-close-settings" class="btn-primary">Selesai</button>
       </div>
     </div>
   </div>
