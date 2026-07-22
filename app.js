@@ -4,14 +4,13 @@ import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, 
 
 // 1. MASUKKAN CONFIG FIREBASE KAMU DI SINI
 const firebaseConfig = {
-  apiKey: "API_KEY_KAMU",
-  authDomain: "project-kamu.firebaseapp.com",
-  projectId: "project-kamu",
-  storageBucket: "project-kamu.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID"
-};
-
+    apiKey: "AIzaSyDPsRwRf72xaQkSdGn89WdwA3sbJI2Z-z0",
+    authDomain: "kegiatanku-503210.firebaseapp.com",
+    projectId: "kegiatanku-503210",
+    storageBucket: "kegiatanku-503210.firebasestorage.app",
+    messagingSenderId: "603325028994",
+    appId: "1:603325028994:web:b6b123f304d8a69d32b29b"
+  };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
