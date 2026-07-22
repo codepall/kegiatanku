@@ -14,10 +14,8 @@
     <div class="login-card">
       <h1>JadwalKu.</h1>
       <p>Kelola waktumu dengan elegan.</p>
-      
       <input type="email" id="login-email" placeholder="Email" required>
       <input type="password" id="login-password" placeholder="Password" required>
-      
       <div class="login-actions">
         <button id="btn-login" class="btn-primary">Login</button>
         <button id="btn-register" class="btn-secondary">Daftar</button>
@@ -32,10 +30,17 @@
       <div class="sidebar-header">
         <h2>JadwalKu</h2>
       </div>
-      <ul class="nav-links">
-        <li class="active">Semua Kegiatan</li>
-        <li>Selesai</li>
-        <li>Belum Selesai</li>
+      <ul class="nav-links" id="sidebar-nav">
+        <li class="nav-label">Status</li>
+        <li class="nav-item active" data-filter="status" data-value="all">Semua Kegiatan</li>
+        <li class="nav-item" data-filter="status" data-value="pending">Belum Selesai</li>
+        <li class="nav-item" data-filter="status" data-value="completed">Selesai</li>
+        
+        <li class="nav-label">Kategori</li>
+        <li class="nav-item" data-filter="category" data-value="PR">PR / Tugas</li>
+        <li class="nav-item" data-filter="category" data-value="Organisasi">Organisasi (PMR)</li>
+        <li class="nav-item" data-filter="category" data-value="Pribadi">Pribadi</li>
+        <li class="nav-item" data-filter="category" data-value="Tinkering">Tinkering</li>
       </ul>
       <div class="user-profile">
         <img id="user-avatar" src="" alt="Avatar">
@@ -47,16 +52,18 @@
     </aside>
 
     <main class="content">
-      <header>
-        <div>
-          <h1 id="greeting">Halo!</h1>
-          <p>Berikut adalah jadwalmu hari ini.</p>
-        </div>
-        <button id="btn-add-task" class="btn-primary">+ Kegiatan Baru</button>
-      </header>
+      <div class="content-wrapper">
+        <header>
+          <div>
+            <h1 id="greeting">Halo!</h1>
+            <p id="header-subtitle">Berikut adalah jadwalmu hari ini.</p>
+          </div>
+          <button id="btn-add-task" class="btn-primary">+ Kegiatan</button>
+        </header>
 
-      <div class="task-container" id="task-list">
-        <!-- Kegiatan dirender via JS -->
+        <div class="task-container" id="task-list">
+          <!-- Kegiatan dirender via JS -->
+        </div>
       </div>
     </main>
   </div>
@@ -65,19 +72,19 @@
   <div id="modal" class="modal">
     <div class="modal-content">
       <h3>Tambah Kegiatan Baru</h3>
-      <input type="text" id="input-title" placeholder="Nama Kegiatan (Mengerjakan Tugas PMR)" required>
+      <input type="text" id="input-title" placeholder="Nama Kegiatan" required>
       <div class="form-row">
         <input type="date" id="input-date" required>
         <select id="input-category">
-          <option value="Sekolah">Sekolah</option>
-          <option value="Organisasi">Organisasi (PMR/OSIS)</option>
+          <option value="PR">PR / Tugas</option>
+          <option value="Organisasi">Organisasi (PMR)</option>
           <option value="Pribadi">Pribadi</option>
           <option value="Tinkering">Tinkering / Ngoding</option>
         </select>
       </div>
       <div class="form-row">
         <input type="time" id="input-time-start" required>
-        <span>sampai</span>
+        <span>s/d</span>
         <input type="time" id="input-time-end" required>
       </div>
       <div class="modal-actions">
