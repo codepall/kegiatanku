@@ -92,7 +92,7 @@
     </main>
   </div>
 
-  <!-- Modal Tambah Kegiatan (Frosted Glass) -->
+  <!-- Modal Tambah Kegiatan -->
   <div id="modal" class="modal">
     <div class="modal-content glass-panel">
       <h3>Buat Kegiatan Baru</h3>
@@ -112,7 +112,7 @@
           </select>
         </div>
 
-        <!-- Opsi Ekstra Kategori PR -->
+        <!-- Ekstra PR -->
         <div class="input-group w-50" id="field-mapel" style="display: none;">
           <label>Mata Pelajaran</label>
           <select id="input-mapel">
@@ -131,23 +131,36 @@
           </select>
         </div>
 
-        <!-- Opsi Ekstra Kategori Organisasi -->
-        <div class="input-group w-50" id="field-org-duration" style="display: none;">
-          <label>Durasi Kegiatan</label>
-          <select id="input-durasi-org">
-            <option value="1">1 Hari Saja</option>
-            <option value="multi">Beberapa Hari</option>
+        <!-- Ekstra Organisasi -->
+        <div class="input-group w-50" id="field-org-sub" style="display: none;">
+          <label>Pilih Organisasi</label>
+          <select id="input-sub-org">
+            <option value="PMR">PMR</option>
+            <option value="OSIS">OSIS</option>
+            <option value="Kader Bank Sampah">Kader Bank Sampah</option>
+            <option value="Kader Keamanan Pangan">Kader Keamanan Pangan</option>
           </select>
         </div>
       </div>
 
-      <!-- Blok Waktu Default (1 Hari) -->
+      <!-- Ekstra Durasi Organisasi -->
+      <div class="input-group" id="field-org-duration" style="display: none;">
+        <label>Durasi Kegiatan</label>
+        <select id="input-durasi-org">
+          <option value="1">1 Hari Saja</option>
+          <option value="multi">Beberapa Hari</option>
+        </select>
+      </div>
+
+      <!-- Blok Waktu Default (1 Hari & PR) -->
       <div id="block-time-single">
         <div class="input-group">
-          <label>Pilih Tanggal</label>
+          <label id="label-date-single">Tanggal Kegiatan</label>
           <input type="date" id="input-date-single">
         </div>
-        <div class="form-row">
+        
+        <!-- Wadah Jam Mulai/Selesai agar bisa disembunyikan saat PR -->
+        <div class="form-row" id="time-start-end-container">
           <div class="input-group w-50">
             <label>Jam Mulai</label>
             <input type="time" id="input-time-start">
@@ -163,11 +176,11 @@
       <div id="block-time-multi" style="display: none;">
         <div class="form-row">
           <div class="input-group w-50">
-            <label>Tanggal Mulai</label>
+            <label>Tgl Mulai</label>
             <input type="date" id="input-date-start-multi">
           </div>
           <div class="input-group w-50">
-            <label>Tanggal Selesai</label>
+            <label>Tgl Selesai</label>
             <input type="date" id="input-date-end-multi">
           </div>
         </div>
