@@ -48,13 +48,16 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
   position: relative; 
   z-index: 100; 
   overflow-x: hidden; 
-  white-space: nowrap; /* Mencegah teks tertekuk saat sidebar mengecil */
+  white-space: nowrap; 
 }
 
-/* Sidebar Ukuran Ikon Saja */
+/* FIX BUG: Menghilangkan teks logo agar tombol geser ke tengah */
 .sidebar.minimized { width: 72px; }
+.sidebar.minimized .logo-area { display: none; }
+.sidebar.minimized .sidebar-header { justify-content: center; padding: 0; }
+.sidebar.minimized .btn-icon { margin: 0 auto; }
 
-.sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 0 4px; }
+.sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 0 4px; transition: all 0.6s var(--ease-smooth); }
 .logo-area { display: flex; align-items: center; gap: 12px; }
 .icon-logo { font-size: 24px; min-width: 24px; text-align: center; color: var(--sage-primary); flex-shrink: 0;}
 .sidebar-header h2 { color: var(--sage-dark); font-size: 18px; }
@@ -73,19 +76,23 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
   transition: background-color 0.2s, color 0.2s; 
   font-size: 13px; font-weight: 500; 
 }
-.nav-item i { font-size: 22px; min-width: 24px; text-align: center; flex-shrink: 0; }
+.nav-item i { font-size: 22px; min-width: 24px; text-align: center; flex-shrink: 0; transition: transform 0.6s var(--ease-smooth); }
+.sidebar:not(.minimized) .nav-item i { transform: translateX(4px); } 
+.sidebar.minimized .nav-item i { transform: translateX(0); }
 .nav-item.active, .nav-item:hover { background-color: rgba(197, 208, 194, 0.4); color: var(--sage-dark); }
 
-/* Transisi Teks Halus (Memudar & Menghilang) */
 .sidebar-text { margin-left: 12px; transition: opacity 0.3s var(--ease-smooth); opacity: 1; }
 .sidebar.minimized .sidebar-text { opacity: 0; pointer-events: none; }
 
 .user-profile { display: flex; align-items: center; padding: 20px 4px 0 4px; border-top: 1px solid var(--glass-border); }
 .user-profile img { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
+.sidebar.minimized .user-info { display: none; }
+.sidebar.minimized .user-profile img { margin: 0 auto; }
 .user-info { display: flex; flex-direction: column; }
 #btn-logout { background: none; border: none; color: #d9534f; cursor: pointer; text-align: left; font-size: 11px; font-weight: 500; padding: 0; }
 
-/* KONTEN UTAMA */
+
+/* --- KONTEN UTAMA --- */
 .content { flex-grow: 1; padding: 32px; overflow-y: auto; display: flex; justify-content: center; transition: all 0.6s var(--ease-smooth); }
 .content-wrapper { width: 100%; max-width: 760px; }
 header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
@@ -125,10 +132,15 @@ textarea:focus { border-color: var(--sage-primary); }
 .btn-delete-task { background: #ffecec; border: 1px solid #ffdcdc; color: #d9534f; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
 .btn-delete-task:hover { background: #d9534f; color: white; }
 
+
+/* --- MODAL & HEADER SILANG ELEGAN --- */
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(6px); }
 .modal.active { display: flex; }
 .modal-content { padding: 24px; border-radius: 20px; width: 100%; max-width: 420px; }
-.modal-content h3 { font-size: 18px; color: var(--sage-dark); margin-bottom: 16px; text-align: center; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--sage-light); padding-bottom: 12px; }
+.modal-header h3 { font-size: 18px; color: var(--sage-dark); margin: 0; }
+.btn-close-modal { background: transparent; border: none; font-size: 22px; color: var(--text-muted); cursor: pointer; transition: color 0.2s; display: flex; align-items: center; justify-content: center; }
+.btn-close-modal:hover { color: #d9534f; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 
 /* STYLE PEMILIH IKON */
@@ -155,12 +167,7 @@ textarea:focus { border-color: var(--sage-primary); }
 @media (max-width: 768px) {
   body { font-size: 12px; }
   
-  .sidebar { 
-    position: fixed; 
-    height: 100vh; 
-    background: rgba(243, 245, 242, 0.95); /* Sedikit lebih solid di mobile */
-    backdrop-filter: blur(20px);
-  }
+  .sidebar { position: fixed; top: 0; left: 0; height: 100vh; box-shadow: 4px 0 20px rgba(0,0,0,0.1); }
   
   .content { margin-left: 72px; width: calc(100vw - 72px); padding: 16px; }
   
@@ -182,7 +189,6 @@ textarea:focus { border-color: var(--sage-primary); }
   .btn-edit-task, .btn-delete-task { width: 28px; height: 28px; }
 
   .modal-content { padding: 16px; max-width: 92%; max-height: 90vh; overflow-y: auto;}
-  .modal-content h3 { font-size: 16px; margin-bottom: 12px; }
   .input-group { margin-bottom: 8px; }
   .input-group label { font-size: 9px; margin-bottom: 2px; }
   .input-group input, .input-group select, textarea { font-size: 11px; padding: 8px; border-radius: 6px; }
