@@ -25,8 +25,53 @@ let currentUser = null;
 let allTasks = [];
 let currentFilter = { type: 'status', value: 'all' };
 let editCatMode = null;
+let editingTaskId = null; // Menyimpan ID kegiatan yang sedang diedit
 
-// Cek dan Minimalkan Sidebar Jika Layar adalah Mobile
+// --- AUTO JADWAL KELAS 9H ---
+// Format: 0=Minggu, 1=Senin, 2=Selasa, 3=Rabu, 4=Kamis, 5=Jumat, 6=Sabtu
+const jadwalMapel = {
+  "BIN": [1, 3, 4], "BK": [1], "BIG": [1, 5], "IPS": [1, 3],
+  "PPKn": [2], "Informatika": [2], "IPA": [2, 5],
+  "MAT": [3, 6], "BJ": [3], "SB": [4], "PAI": [4], "PJOK": [6]
+};
+
+// --- FUNGSI FORMAT TANGGAL INDO ---
+function formatDateIndo(dateStr) {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-');
+  const dateObj = new Date(y, m - 1, d);
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  return `${days[dateObj.getDay()]}, ${d} ${months[dateObj.getMonth()]} ${y}`;
+}
+
+// Menghitung "Pertemuan Selanjutnya"
+function getNextMeetingDate(mapel) {
+  const daysArr = jadwalMapel[mapel];
+  if (!daysArr) return ""; 
+  const today = new Date();
+  let currentDay = today.getDay(); 
+  let diff = 1; 
+  while(diff <= 7) {
+    let checkDay = (currentDay + diff) % 7;
+    if(daysArr.includes(checkDay)) {
+      let nextDate = new Date(today);
+      nextDate.setDate(today.getDate() + diff);
+      return nextDate.toISOString().split('T')[0]; // Format YYYY-MM-DD
+    }
+    diff++;
+  }
+  return "";
+}
+
+// Menghitung Besok
+function getTomorrowDate() {
+  const tmrw = new Date();
+  tmrw.setDate(tmrw.getDate() + 1);
+  return tmrw.toISOString().split('T')[0];
+}
+
+// --- SETUP AWAL ---
 if (window.innerWidth <= 768) {
   document.getElementById('sidebar').classList.add('minimized');
 }
@@ -37,7 +82,6 @@ async function loadUserSettings() {
   else await setDoc(doc(db, "userSettings", currentUser.uid), { categories: userCategories });
   applyCategoriesToUI();
 }
-
 async function saveUserSettings() {
   await setDoc(doc(db, "userSettings", currentUser.uid), { categories: userCategories });
   applyCategoriesToUI();
@@ -67,80 +111,9 @@ function applyCategoriesToUI() {
   `).join('');
 }
 
-function resetCatForm() {
-  editCatMode = null;
-  document.getElementById('set-cat-name').value = '';
-  document.getElementById('set-sub-cat').value = '';
-  document.querySelectorAll('.chk-label input').forEach(chk => chk.checked = false);
-  document.getElementById('btn-save-cat').textContent = "Simpan Kategori";
-  document.getElementById('btn-cancel-edit-cat').style.display = 'none';
-}
-
-document.getElementById('btn-cancel-edit-cat').addEventListener('click', resetCatForm);
-
-document.getElementById('btn-save-cat').addEventListener('click', async () => {
-  const name = document.getElementById('set-cat-name').value.trim();
-  if(!name) return alert("Nama Kategori tidak boleh kosong!");
-
-  const subsRaw = document.getElementById('set-sub-cat').value;
-  const newCat = {
-    name: name,
-    subs: subsRaw ? subsRaw.split(',').map(s => s.trim()).filter(s => s) : [],
-    longDate: document.getElementById('chk-longdate').checked,
-    timeRange: document.getElementById('chk-timerange').checked,
-    deadline: document.getElementById('chk-deadline').checked,
-    startTime: document.getElementById('chk-starttime').checked,
-    finishFast: document.getElementById('chk-finishfast').checked
-  };
-
-  if (editCatMode) {
-    const idx = userCategories.findIndex(c => c.name === editCatMode);
-    if(idx >= 0) userCategories[idx] = newCat;
-    
-    if (editCatMode !== name) {
-      const tasksToUpdate = allTasks.filter(t => t.category === editCatMode);
-      for (const t of tasksToUpdate) await updateDoc(doc(db, "tasks", t.id), { category: name });
-    }
-  } else {
-    const existingIdx = userCategories.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
-    if(existingIdx >= 0) userCategories[existingIdx] = newCat;
-    else userCategories.push(newCat);
-  }
-
-  resetCatForm();
-  await saveUserSettings();
-});
-
-document.getElementById('list-categories').addEventListener('click', async (e) => {
-  const btnDel = e.target.closest('.btn-del-cat');
-  const btnEdit = e.target.closest('.btn-edit-cat');
-
-  if(btnDel && confirm("Hapus kategori ini? (Catatan: Kegiatan yg sudah ada di kategori ini tidak akan terhapus)")) {
-    userCategories = userCategories.filter(c => c.name !== btnDel.getAttribute('data-name'));
-    await saveUserSettings();
-  }
-
-  if(btnEdit) {
-    const catName = btnEdit.getAttribute('data-name');
-    const cat = userCategories.find(c => c.name === catName);
-    if(cat) {
-      document.getElementById('set-cat-name').value = cat.name;
-      document.getElementById('set-sub-cat').value = cat.subs.join(', ');
-      document.getElementById('chk-longdate').checked = cat.longDate;
-      document.getElementById('chk-timerange').checked = cat.timeRange;
-      document.getElementById('chk-deadline').checked = cat.deadline;
-      document.getElementById('chk-starttime').checked = cat.startTime;
-      document.getElementById('chk-finishfast').checked = cat.finishFast;
-
-      editCatMode = cat.name;
-      document.getElementById('btn-save-cat').textContent = "Update Kategori";
-      document.getElementById('btn-cancel-edit-cat').style.display = 'inline-block';
-    }
-  }
-});
-
-document.getElementById('input-category').addEventListener('change', (e) => {
-  const cat = userCategories.find(c => c.name === e.target.value);
+// UI LOGIC UNTUK INPUT DINAMIS
+function updateFormInputs() {
+  const cat = userCategories.find(c => c.name === document.getElementById('input-category').value);
   if(!cat) return;
 
   const fSub = document.getElementById('field-sub-category');
@@ -151,24 +124,38 @@ document.getElementById('input-category').addEventListener('change', (e) => {
 
   document.getElementById('field-long-date').style.display = cat.longDate ? 'flex' : 'none';
   document.getElementById('field-time-range').style.display = cat.timeRange ? 'flex' : 'none';
-  document.getElementById('field-deadline').style.display = cat.deadline ? 'flex' : 'none';
+  
+  // Khusus Opsi PR / Kategori Berdeadline
+  if(cat.deadline) {
+    if(cat.name === 'PR') {
+      document.getElementById('field-pr-deadline-type').style.display = 'flex';
+      document.getElementById('val-pr-deadline-type').dispatchEvent(new Event('change')); // Trigger logic
+    } else {
+      document.getElementById('field-pr-deadline-type').style.display = 'none';
+      document.getElementById('field-deadline').style.display = 'flex';
+    }
+  } else {
+    document.getElementById('field-pr-deadline-type').style.display = 'none';
+    document.getElementById('field-deadline').style.display = 'none';
+  }
+  
   document.getElementById('field-start-time').style.display = (cat.startTime && !cat.timeRange) ? 'flex' : 'none';
   document.getElementById('field-default-date').style.display = (!cat.longDate && !cat.deadline) ? 'flex' : 'none';
-});
+}
 
-document.getElementById('btn-open-settings').addEventListener('click', () => { resetCatForm(); document.getElementById('modal-settings').classList.add('active'); });
-document.getElementById('btn-close-settings').addEventListener('click', () => document.getElementById('modal-settings').classList.remove('active'));
-document.getElementById('btn-cancel').addEventListener('click', () => document.getElementById('modal').classList.remove('active'));
-document.getElementById('btn-add-task').addEventListener('click', () => {
-  document.getElementById('input-title').value = '';
-  document.getElementById('input-notes').value = ''; 
-  if(userCategories.length > 0) {
-    document.getElementById('input-category').value = userCategories[0].name;
-    document.getElementById('input-category').dispatchEvent(new Event('change'));
+document.getElementById('input-category').addEventListener('change', updateFormInputs);
+
+// Logika Tipe Deadline PR (Menyembunyikan input manual jika otomatis)
+document.getElementById('val-pr-deadline-type').addEventListener('change', (e) => {
+  if(e.target.value === 'khusus') {
+    document.getElementById('field-deadline').style.display = 'flex';
+  } else {
+    document.getElementById('field-deadline').style.display = 'none';
   }
-  document.getElementById('modal').classList.add('active');
 });
 
+
+// AUTH & UTILS AWAL
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
@@ -189,35 +176,99 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('login-screen').classList.add('active');
   }
 });
-
 document.getElementById('btn-login').addEventListener('click', async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } catch (e) { document.getElementById('login-error').textContent = 'Gagal login.'; }});
 document.getElementById('btn-register').addEventListener('click', async () => { try { await createUserWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } catch (e) { document.getElementById('login-error').textContent = 'Gagal daftar.'; }});
 document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+// SIDEBAR & PENGATURAN KATEGORI (Singkat)
+function resetCatForm() { /* Logic sama spt sblmnya */
+  editCatMode = null; document.getElementById('set-cat-name').value = ''; document.getElementById('set-sub-cat').value = '';
+  document.querySelectorAll('.chk-label input').forEach(chk => chk.checked = false);
+  document.getElementById('btn-save-cat').textContent = "Simpan Kategori"; document.getElementById('btn-cancel-edit-cat').style.display = 'none';
+}
+document.getElementById('btn-cancel-edit-cat').addEventListener('click', resetCatForm);
+document.getElementById('btn-save-cat').addEventListener('click', async () => {
+  const name = document.getElementById('set-cat-name').value.trim();
+  if(!name) return alert("Nama Kategori tidak boleh kosong!");
+  const subsRaw = document.getElementById('set-sub-cat').value;
+  const newCat = {
+    name: name, subs: subsRaw ? subsRaw.split(',').map(s => s.trim()).filter(s => s) : [],
+    longDate: document.getElementById('chk-longdate').checked, timeRange: document.getElementById('chk-timerange').checked,
+    deadline: document.getElementById('chk-deadline').checked, startTime: document.getElementById('chk-starttime').checked, finishFast: document.getElementById('chk-finishfast').checked
+  };
+  if (editCatMode) {
+    const idx = userCategories.findIndex(c => c.name === editCatMode); if(idx >= 0) userCategories[idx] = newCat;
+    if (editCatMode !== name) {
+      const tasksToUpdate = allTasks.filter(t => t.category === editCatMode);
+      for (const t of tasksToUpdate) await updateDoc(doc(db, "tasks", t.id), { category: name });
+    }
+  } else {
+    const existingIdx = userCategories.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
+    if(existingIdx >= 0) userCategories[existingIdx] = newCat; else userCategories.push(newCat);
+  }
+  resetCatForm(); await saveUserSettings();
+});
+document.getElementById('list-categories').addEventListener('click', async (e) => {
+  const btnDel = e.target.closest('.btn-del-cat'); const btnEdit = e.target.closest('.btn-edit-cat');
+  if(btnDel && confirm("Hapus kategori ini? (Catatan: Kegiatan yg sudah ada di kategori ini tidak akan terhapus)")) {
+    userCategories = userCategories.filter(c => c.name !== btnDel.getAttribute('data-name')); await saveUserSettings();
+  }
+  if(btnEdit) {
+    const catName = btnEdit.getAttribute('data-name'); const cat = userCategories.find(c => c.name === catName);
+    if(cat) {
+      document.getElementById('set-cat-name').value = cat.name; document.getElementById('set-sub-cat').value = cat.subs.join(', ');
+      document.getElementById('chk-longdate').checked = cat.longDate; document.getElementById('chk-timerange').checked = cat.timeRange;
+      document.getElementById('chk-deadline').checked = cat.deadline; document.getElementById('chk-starttime').checked = cat.startTime;
+      document.getElementById('chk-finishfast').checked = cat.finishFast;
+      editCatMode = cat.name; document.getElementById('btn-save-cat').textContent = "Update Kategori"; document.getElementById('btn-cancel-edit-cat').style.display = 'inline-block';
+    }
+  }
+});
+document.getElementById('btn-open-settings').addEventListener('click', () => { resetCatForm(); document.getElementById('modal-settings').classList.add('active'); });
+document.getElementById('btn-close-settings').addEventListener('click', () => document.getElementById('modal-settings').classList.remove('active'));
 
 function attachSidebarListeners() {
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => {
       if (item.id === 'btn-open-settings') return;
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); item.classList.add('active');
       currentFilter = { type: item.getAttribute('data-filter'), value: item.getAttribute('data-value') };
-      
-      // Update judul jika di Desktop
-      if(window.innerWidth > 768) {
-        document.getElementById('header-subtitle').textContent = `Menampilkan: ${item.querySelector('.sidebar-text').textContent}`;
-      } else {
-        // Auto minimize jika di Mobile setelah pilih menu
-        document.getElementById('sidebar').classList.add('minimized');
-      }
-      
+      if(window.innerWidth > 768) { document.getElementById('header-subtitle').textContent = `Menampilkan: ${item.querySelector('.sidebar-text').textContent}`; } 
+      else { document.getElementById('sidebar').classList.add('minimized'); }
       renderTasksUI();
     });
   });
 }
+document.getElementById('btn-toggle-sidebar').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('minimized'); });
 
-// Logika Toggle Sidebar kini berlaku di semua perangkat
-document.getElementById('btn-toggle-sidebar').addEventListener('click', () => { 
-  document.getElementById('sidebar').classList.toggle('minimized'); 
+
+// --- LOGIKA SIMPAN & UPDATE (EDIT) ---
+document.getElementById('btn-cancel').addEventListener('click', () => {
+  document.getElementById('modal').classList.remove('active');
+  editingTaskId = null; // Reset saat batal
+});
+
+document.getElementById('btn-add-task').addEventListener('click', () => {
+  editingTaskId = null;
+  document.getElementById('modal-form-title').textContent = "Buat Kegiatan Baru";
+  document.getElementById('btn-save').textContent = "Simpan";
+  
+  // Kosongkan Form
+  document.getElementById('input-title').value = '';
+  document.getElementById('input-notes').value = ''; 
+  document.getElementById('val-date-start').value = '';
+  document.getElementById('val-date-end').value = '';
+  document.getElementById('val-date-deadline').value = '';
+  document.getElementById('val-default-date').value = '';
+  document.getElementById('val-time-start').value = '';
+  document.getElementById('val-time-end').value = '';
+  document.getElementById('val-time-only').value = '';
+
+  if(userCategories.length > 0) {
+    document.getElementById('input-category').value = userCategories[0].name;
+    updateFormInputs();
+  }
+  document.getElementById('modal').classList.add('active');
 });
 
 document.getElementById('btn-save').addEventListener('click', async () => {
@@ -231,10 +282,17 @@ document.getElementById('btn-save').addEventListener('click', async () => {
 
   let payload = {
     uid: currentUser.uid, title: title, category: catName,
-    completed: false, notified: false, notified_hmin1: false, notified_hday: false,
-    notes: notes, finishFast: cat.finishFast,
-    createdAt: new Date()
+    notes: notes, finishFast: cat.finishFast
   };
+  
+  // Jika ini Add Baru (bukan Edit), tambahkan status dan notifikasi
+  if (!editingTaskId) {
+    payload.completed = false;
+    payload.notified = false;
+    payload.notified_hmin1 = false;
+    payload.notified_hday = false;
+    payload.createdAt = new Date();
+  }
 
   if(cat.subs.length) payload.subCategory = document.getElementById('input-sub-category').value;
   if(cat.longDate) {
@@ -242,10 +300,27 @@ document.getElementById('btn-save').addEventListener('click', async () => {
     payload.dateEnd = document.getElementById('val-date-end').value;
     if(!payload.dateStart || !payload.dateEnd) return alert("Isi tanggal mulai & selesai!");
   }
+  
+  // Logika Khusus Deadline PR 
   if(cat.deadline) {
-    payload.dateDeadline = document.getElementById('val-date-deadline').value;
-    if(!payload.dateDeadline) return alert("Isi tanggal deadline!");
+    if(cat.name === 'PR') {
+      const type = document.getElementById('val-pr-deadline-type').value;
+      if (type === 'besok') {
+        payload.dateDeadline = getTomorrowDate();
+      } else if (type === 'next_meeting') {
+        const nextDate = getNextMeetingDate(payload.subCategory);
+        if(!nextDate) return alert("Maaf, Mapel ini tidak ditemukan di jadwal!");
+        payload.dateDeadline = nextDate;
+      } else {
+        payload.dateDeadline = document.getElementById('val-date-deadline').value;
+        if(!payload.dateDeadline) return alert("Isi tanggal deadline khusus!");
+      }
+    } else {
+      payload.dateDeadline = document.getElementById('val-date-deadline').value;
+      if(!payload.dateDeadline) return alert("Isi tanggal deadline!");
+    }
   }
+
   if(!cat.longDate && !cat.deadline) {
     payload.date = document.getElementById('val-default-date').value;
     if(!payload.date) return alert("Isi tanggal kegiatan!");
@@ -257,20 +332,29 @@ document.getElementById('btn-save').addEventListener('click', async () => {
     payload.timeStart = document.getElementById('val-time-only').value;
   }
 
+  // Bersihkan properti undefined
   Object.keys(payload).forEach(k => (payload[k] === undefined || payload[k] === "") && delete payload[k]);
 
   try {
     btnSave.textContent = "Menyimpan...";
-    await addDoc(collection(db, "tasks"), payload);
+    if (editingTaskId) {
+      await updateDoc(doc(db, "tasks", editingTaskId), payload);
+    } else {
+      await addDoc(collection(db, "tasks"), payload);
+    }
     document.getElementById('modal').classList.remove('active');
-  } catch (error) { console.error(error); alert("Gagal menyimpan."); } finally { btnSave.textContent = "Simpan"; }
+    editingTaskId = null; // Reset
+  } catch (error) { 
+    console.error(error); alert("Gagal menyimpan."); 
+  } finally { btnSave.textContent = "Simpan"; }
 });
 
+
+// --- PENGAMBILAN & RENDER DATA ---
 function fetchTasksFromDB() {
   onSnapshot(query(collection(db, "tasks"), where("uid", "==", currentUser.uid)), (snapshot) => {
     allTasks = [];
     snapshot.forEach(docSnap => { allTasks.push({ id: docSnap.id, ...docSnap.data() }); });
-    allTasks.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
     renderTasksUI();
   });
 }
@@ -279,17 +363,26 @@ function renderTasksUI() {
   const listEl = document.getElementById('task-list');
   listEl.innerHTML = '';
   
-  let filtered = allTasks;
-  if (currentFilter.type === 'status') filtered = allTasks.filter(t => currentFilter.value === 'pending' ? !t.completed : (currentFilter.value === 'completed' ? t.completed : true));
-  else if (currentFilter.type === 'category') filtered = allTasks.filter(t => t.category === currentFilter.value);
+  // PENGURUTAN: Belum Selesai (false) di atas, Selesai (true) di bawah. Kemudian urutkan berdasar createdAt
+  let sortedTasks = [...allTasks].sort((a, b) => {
+    if (a.completed === b.completed) {
+      return b.createdAt.toMillis() - a.createdAt.toMillis();
+    }
+    return a.completed ? 1 : -1;
+  });
+
+  let filtered = sortedTasks;
+  if (currentFilter.type === 'status') filtered = sortedTasks.filter(t => currentFilter.value === 'pending' ? !t.completed : (currentFilter.value === 'completed' ? t.completed : true));
+  else if (currentFilter.type === 'category') filtered = sortedTasks.filter(t => t.category === currentFilter.value);
 
   if (!filtered.length) return listEl.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:13px; margin-top:20px;">Belum ada kegiatan.</p>`;
 
   filtered.forEach(task => {
     let tDisp = '';
-    if(task.dateStart && task.dateEnd) tDisp += `📅 ${task.dateStart} s/d ${task.dateEnd} `;
-    else if(task.dateDeadline) tDisp += `📅 Deadline: ${task.dateDeadline} `;
-    else if(task.date) tDisp += `📅 ${task.date} `;
+    // IMPLEMENTASI FORMAT TANGGAL INDO
+    if(task.dateStart && task.dateEnd) tDisp += `📅 ${formatDateIndo(task.dateStart)} s/d ${formatDateIndo(task.dateEnd)} `;
+    else if(task.dateDeadline) tDisp += `📅 Deadline: ${formatDateIndo(task.dateDeadline)} `;
+    else if(task.date) tDisp += `📅 ${formatDateIndo(task.date)} `;
 
     if(task.timeStart && task.timeEnd) tDisp += `| ⏰ ${task.timeStart} - ${task.timeEnd}`;
     else if(task.timeStart) tDisp += `| ⏰ Jam: ${task.timeStart}`;
@@ -315,18 +408,52 @@ function renderTasksUI() {
       </div>
       <div class="task-actions">
         ${btnFinishFast}
-        <button class="btn-delete"><i class="ph ph-trash"></i></button>
+        <button class="btn-edit-task"><i class="ph ph-pencil"></i></button>
+        <button class="btn-delete-task"><i class="ph ph-trash"></i></button>
       </div>
     `;
     
     card.querySelector('.task-checkbox').addEventListener('change', async (e) => await updateDoc(doc(db, "tasks", task.id), { completed: e.target.checked }));
-    card.querySelector('.btn-delete').addEventListener('click', async () => { if(confirm(`Hapus?`)) await deleteDoc(doc(db, "tasks", task.id)); });
+    card.querySelector('.btn-delete-task').addEventListener('click', async () => { if(confirm(`Hapus?`)) await deleteDoc(doc(db, "tasks", task.id)); });
+    
+    // LOGIKA TOMBOL EDIT TUGAS
+    card.querySelector('.btn-edit-task').addEventListener('click', () => {
+      editingTaskId = task.id;
+      document.getElementById('modal-form-title').textContent = "Edit Kegiatan";
+      document.getElementById('btn-save').textContent = "Update";
+      
+      document.getElementById('input-title').value = task.title;
+      document.getElementById('input-notes').value = task.notes || '';
+      document.getElementById('input-category').value = task.category;
+      updateFormInputs(); // Render ulang form sesuai kategori
+
+      setTimeout(() => {
+        if(task.subCategory) document.getElementById('input-sub-category').value = task.subCategory;
+        if(task.dateStart) document.getElementById('val-date-start').value = task.dateStart;
+        if(task.dateEnd) document.getElementById('val-date-end').value = task.dateEnd;
+        if(task.dateDeadline) {
+          document.getElementById('val-pr-deadline-type').value = 'khusus';
+          document.getElementById('val-pr-deadline-type').dispatchEvent(new Event('change'));
+          document.getElementById('val-date-deadline').value = task.dateDeadline;
+        }
+        if(task.date) document.getElementById('val-default-date').value = task.date;
+        if(task.timeStart) {
+          document.getElementById('val-time-start').value = task.timeStart;
+          document.getElementById('val-time-only').value = task.timeStart;
+        }
+        if(task.timeEnd) document.getElementById('val-time-end').value = task.timeEnd;
+      }, 50);
+
+      document.getElementById('modal').classList.add('active');
+    });
+
     if(task.finishFast && !task.completed) card.querySelector('.btn-finish').addEventListener('click', async () => await updateDoc(doc(db, "tasks", task.id), { completed: true }));
 
     listEl.appendChild(card);
   });
 }
 
+// LOGIKA NOTIFIKASI
 function startNotificationChecker() {
   setInterval(async () => {
     if (Notification.permission === "granted") {
