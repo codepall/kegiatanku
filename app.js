@@ -2,8 +2,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- API KEY GEMINI KAMU (Pastikan valid) ---
-const GEMINI_API_KEY = "AQ.Ab8RN6L89IrCogthMiB0M0BwCe2ahZOzK6Hi8DkxGavj7AFNEw"; 
+// --- KUNCI API GEMINI KAMU (PASTIKAN TIDAK ADA SPASI TERTINGGAL) ---
+const GEMINI_API_KEY = "AQ.Ab8RN6L89IrCogthMiB0M0BwCe2ahZOzK6Hi8DkxGavj7AFNEw";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDPsRwRf72xaQkSdGn89WdwA3sbJI2Z-z0",
@@ -18,7 +18,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Data Kategori & Jadwal Dinamis
 let userCategories = [
   { name: "PR", icon: "ph-book-open", subs: ["BIN", "BK", "BIG", "IPS", "PPKn", "Informatika", "IPA", "MAT", "BJ", "SB", "PAI", "PJOK"], longDate: false, timeRange: false, deadline: true, startTime: false, finishFast: false }
 ];
@@ -60,7 +59,6 @@ function formatDateIndo(dateStr) {
   return `${days[dateObj.getDay()]}, ${d} ${months[dateObj.getMonth()]} ${y}`;
 }
 
-// LOGIKA PERTEMUAN SELANJUTNYA MEMBACA JADWAL DINAMIS
 function getNextMeetingDate(subCat) {
   const daysArr = userSchedule[subCat];
   if (!daysArr || daysArr.length === 0) return ""; 
@@ -85,7 +83,7 @@ function getTomorrowDate() {
   return tmrw.toISOString().split('T')[0];
 }
 
-// --- SIDEBAR LOGIC (SUPER SMOOTH) ---
+// --- SIDEBAR & OVERLAY LOGIC ---
 if (window.innerWidth <= 768) {
   document.getElementById('sidebar').classList.add('minimized');
 }
@@ -136,7 +134,6 @@ document.getElementById('sidebar-nav').addEventListener('click', (e) => {
   document.getElementById('sidebar-overlay').classList.remove('active');
 });
 
-
 // --- KATEGORI & SCHEDULE ---
 async function loadUserSettings() {
   const docSnap = await getDoc(doc(db, "userSettings", currentUser.uid));
@@ -178,7 +175,6 @@ function applyCategoriesToUI() {
   `).join('');
 }
 
-// Fitur Dynamic Schedule Modal Render
 function renderScheduleModal() {
   const matrixContainer = document.getElementById('schedule-matrix');
   matrixContainer.innerHTML = '';
@@ -190,7 +186,7 @@ function renderScheduleModal() {
     }
   });
 
-  allSubs = [...new Set(allSubs)]; // Unique
+  allSubs = [...new Set(allSubs)]; 
 
   if (allSubs.length === 0) {
     matrixContainer.innerHTML = '<p style="font-size:12px; color:var(--text-muted); text-align:center;">Belum ada sub-kategori dengan opsi Deadline aktif.</p>';
@@ -218,7 +214,6 @@ function renderScheduleModal() {
   });
 }
 
-// SIMPAN JADWAL MANUAL
 document.getElementById('btn-save-schedule').addEventListener('click', async () => {
   const btn = document.getElementById('btn-save-schedule');
   btn.textContent = "Menyimpan...";
@@ -264,8 +259,12 @@ document.getElementById('btn-scan-ai').addEventListener('click', async () => {
   btnScan.innerHTML = `<i class="ph ph-spinner-gap"></i> Loading...`;
 
   try {
-    const base64Image = await fileToBase64(file);
+    const rawKey = GEMINI_API_KEY.trim();
+    if (!rawKey.startsWith("AIzaSy")) {
+      throw new Error("Kunci API salah! Harus berawalan 'AIzaSy'.");
+    }
 
+    const base64Image = await fileToBase64(file);
     const promptText = `
       Analisis gambar jadwal pelajaran ini. Ekstrak data mata pelajaran beserta harinya menjadi format JSON murni.
       Kunci (key) adalah singkatan mata pelajaran, nilainya (value) adalah array hari (1=Senin, 2=Selasa, 3=Rabu, 4=Kamis, 5=Jumat, 6=Sabtu).
@@ -273,7 +272,7 @@ document.getElementById('btn-scan-ai').addEventListener('click', async () => {
       Contoh: {"BIN": [1, 3], "MAT": [2, 6]}
     `;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${rawKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -283,7 +282,7 @@ document.getElementById('btn-scan-ai').addEventListener('click', async () => {
 
     if (!response.ok) {
       const err = await response.json();
-      throw new Error(err.error?.message || "Akses ditolak. Cek kembali API Key.");
+      throw new Error(err.error?.message || "Akses ditolak oleh Google. Cek kembali API Key.");
     }
 
     const result = await response.json();
@@ -291,19 +290,18 @@ document.getElementById('btn-scan-ai').addEventListener('click', async () => {
     if (result.candidates && result.candidates.length > 0) {
       let aiResponseText = result.candidates[0].content.parts[0].text;
       
-      // Murni mengekstrak JSON walau AI nya nambahin kata2
       const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("AI tidak memberikan format data yang bisa dibaca.");
+      if (!jsonMatch) throw new Error("AI membalas dengan format yang salah.");
       
       const parsedSchedule = JSON.parse(jsonMatch[0]);
       userSchedule = { ...userSchedule, ...parsedSchedule };
       
-      renderScheduleModal(); // Render ulang agar kotak langsung tercentang
+      renderScheduleModal(); 
       
       statusText.textContent = "Berhasil! Jangan lupa klik 'Simpan Jadwal' di bawah.";
       statusText.style.color = "var(--sage-primary)";
     } else {
-      throw new Error("AI gagal mengenali gambar.");
+      throw new Error("AI gagal mengenali tabel gambar.");
     }
   } catch (error) {
     console.error("AI Scan Error:", error);
