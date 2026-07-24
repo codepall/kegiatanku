@@ -10,6 +10,9 @@
 </head>
 <body>
 
+  <!-- Efek Blur Latar Belakang (Aktif Saat Sidebar Terbuka) -->
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
   <!-- Layar Login -->
   <div id="login-screen" class="screen active">
     <div class="login-card glass-panel">
@@ -34,14 +37,11 @@
   <!-- Layar Aplikasi -->
   <div id="app-screen" class="screen layout">
     
-    <!-- Sidebar Navigation Rail -->
+    <!-- Sidebar Navigation Rail Super Smooth -->
     <aside class="sidebar glass-panel" id="sidebar">
       <div class="sidebar-header">
-        <div class="logo-area">
-          <i class="ph ph-calendar-check icon-logo"></i>
-          <h2 class="sidebar-text">JadwalKu</h2>
-        </div>
         <button id="btn-toggle-sidebar" class="btn-icon"><i class="ph ph-list"></i></button>
+        <h2 class="sidebar-text">JadwalKu</h2>
       </div>
       
       <ul class="nav-links" id="sidebar-nav">
@@ -91,7 +91,6 @@
   <!-- Modal Tambah / Edit Kegiatan -->
   <div id="modal" class="modal">
     <div class="modal-content glass-panel">
-      <!-- HEADER POP UP BARU (X DI ATAS) -->
       <div class="modal-header">
         <h3 id="modal-form-title">Buat Kegiatan Baru</h3>
         <button id="btn-cancel" class="btn-close-modal"><i class="ph ph-x"></i></button>
@@ -153,7 +152,6 @@
       </div>
 
       <div class="modal-actions">
-        <!-- Tombol batal dipindah ke atas, sisa tombol Simpan di bawah -->
         <button id="btn-save" class="btn-primary" style="width: 100%;">Simpan Kegiatan</button>
       </div>
     </div>
@@ -162,7 +160,6 @@
   <!-- Modal Pengaturan Kategori -->
   <div id="modal-settings" class="modal">
     <div class="modal-content glass-panel" style="max-height: 85vh; overflow-y: auto; max-width: 460px;">
-      <!-- HEADER POP UP BARU (X DI ATAS) -->
       <div class="modal-header">
         <h3>Pengaturan Kategori</h3>
         <button id="btn-close-settings" class="btn-close-modal"><i class="ph ph-x"></i></button>
@@ -199,10 +196,8 @@
       </div>
 
       <hr style="border: 0; border-top: 1px dashed var(--sage-light); margin: 24px 0;">
-
       <h4>Kategori Tersimpan</h4>
       <ul id="list-categories" class="settings-list"></ul>
-      
     </div>
   </div>
 
