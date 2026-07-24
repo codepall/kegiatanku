@@ -91,7 +91,11 @@
   <!-- Modal Tambah / Edit Kegiatan -->
   <div id="modal" class="modal">
     <div class="modal-content glass-panel">
-      <h3 id="modal-form-title">Buat Kegiatan Baru</h3>
+      <!-- HEADER POP UP BARU (X DI ATAS) -->
+      <div class="modal-header">
+        <h3 id="modal-form-title">Buat Kegiatan Baru</h3>
+        <button id="btn-cancel" class="btn-close-modal"><i class="ph ph-x"></i></button>
+      </div>
       
       <div class="input-group">
         <label>Judul Kegiatan</label>
@@ -149,8 +153,8 @@
       </div>
 
       <div class="modal-actions">
-        <button id="btn-cancel" class="btn-secondary">Batal</button>
-        <button id="btn-save" class="btn-primary">Simpan</button>
+        <!-- Tombol batal dipindah ke atas, sisa tombol Simpan di bawah -->
+        <button id="btn-save" class="btn-primary" style="width: 100%;">Simpan Kegiatan</button>
       </div>
     </div>
   </div>
@@ -158,7 +162,11 @@
   <!-- Modal Pengaturan Kategori -->
   <div id="modal-settings" class="modal">
     <div class="modal-content glass-panel" style="max-height: 85vh; overflow-y: auto; max-width: 460px;">
-      <h3>Pengaturan Kategori Custom</h3>
+      <!-- HEADER POP UP BARU (X DI ATAS) -->
+      <div class="modal-header">
+        <h3>Pengaturan Kategori</h3>
+        <button id="btn-close-settings" class="btn-close-modal"><i class="ph ph-x"></i></button>
+      </div>
       
       <div class="settings-form">
         <div class="input-group">
@@ -195,9 +203,6 @@
       <h4>Kategori Tersimpan</h4>
       <ul id="list-categories" class="settings-list"></ul>
       
-      <div class="modal-actions" style="margin-top:20px;">
-        <button id="btn-close-settings" class="btn-primary">Tutup</button>
-      </div>
     </div>
   </div>
 
