@@ -2,8 +2,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- KUNCI API GEMINI KAMU ---
-const GEMINI_API_KEY = "AQ.Ab8RN6LWtsDtuEuNDMaYwNj2-Ljt8_nKZP_TUot5MkIX5svcpA";
+// --- API KEY GEMINI KAMU (Pastikan valid) ---
+const GEMINI_API_KEY = "AQ.Ab8RN6LWtsDtuEuNDMaYwNj2-Ljt8_nKZP_TUot5MkIX5svcpA"; 
 
 const firebaseConfig = {
   apiKey: "AIzaSyDPsRwRf72xaQkSdGn89WdwA3sbJI2Z-z0",
@@ -18,11 +18,11 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Data Dinamis
+// Data Kategori & Jadwal Dinamis
 let userCategories = [
   { name: "PR", icon: "ph-book-open", subs: ["BIN", "BK", "BIG", "IPS", "PPKn", "Informatika", "IPA", "MAT", "BJ", "SB", "PAI", "PJOK"], longDate: false, timeRange: false, deadline: true, startTime: false, finishFast: false }
 ];
-let userSchedule = {}; // Jadwal Dinamis. Contoh hasil scan: { "BIN": [1, 3, 4], "MAT": [2, 6] }
+let userSchedule = {}; 
 
 let currentUser = null;
 let allTasks = [];
@@ -60,12 +60,12 @@ function formatDateIndo(dateStr) {
   return `${days[dateObj.getDay()]}, ${d} ${months[dateObj.getMonth()]} ${y}`;
 }
 
-// LOGIKA CERDAS PERTEMUAN SELANJUTNYA MEMBACA JADWAL DINAMIS
+// LOGIKA PERTEMUAN SELANJUTNYA MEMBACA JADWAL DINAMIS
 function getNextMeetingDate(subCat) {
   const daysArr = userSchedule[subCat];
   if (!daysArr || daysArr.length === 0) return ""; 
   const today = new Date();
-  let currentDay = today.getDay(); // 0=Minggu, 1=Senin ... 6=Sabtu
+  let currentDay = today.getDay(); 
   let diff = 1; 
   while(diff <= 7) {
     let checkDay = (currentDay + diff) % 7;
@@ -85,7 +85,7 @@ function getTomorrowDate() {
   return tmrw.toISOString().split('T')[0];
 }
 
-// --- SIDEBAR & OVERLAY LOGIC ---
+// --- SIDEBAR LOGIC (SUPER SMOOTH) ---
 if (window.innerWidth <= 768) {
   document.getElementById('sidebar').classList.add('minimized');
 }
@@ -246,7 +246,7 @@ function fileToBase64(file) {
   });
 }
 
-// --- FUNGSI SCAN JADWAL DENGAN GEMINI AI ---
+// --- FUNGSI SCAN JADWAL DENGAN GEMINI AI (KEBAL ERROR) ---
 document.getElementById('btn-scan-ai').addEventListener('click', async () => {
   const fileInput = document.getElementById('upload-schedule-img');
   const statusText = document.getElementById('ai-status');
@@ -265,49 +265,49 @@ document.getElementById('btn-scan-ai').addEventListener('click', async () => {
 
   try {
     const base64Image = await fileToBase64(file);
-    const mimeType = file.type;
 
     const promptText = `
-      Analisis gambar jadwal pelajaran ini. Ekstrak data mata pelajaran beserta harinya menjadi format JSON murni tanpa format markdown (tanpa \`\`\`json).
-      Kunci (key) adalah singkatan mata pelajaran yang kamu temukan di tabel, dan nilainya (value) adalah array angka hari berdasar kolomnya (1=Senin, 2=Selasa, 3=Rabu, 4=Kamis, 5=Jumat, 6=Sabtu).
-      Abaikan nama guru. Fokus pada mata pelajaran.
-      Contoh output yang diharapkan: {"BIN": [1, 3], "MAT": [2, 6], "IPA": [2, 5]}
+      Analisis gambar jadwal pelajaran ini. Ekstrak data mata pelajaran beserta harinya menjadi format JSON murni.
+      Kunci (key) adalah singkatan mata pelajaran, nilainya (value) adalah array hari (1=Senin, 2=Selasa, 3=Rabu, 4=Kamis, 5=Jumat, 6=Sabtu).
+      PENTING: Jawab HANYA dengan objek JSON. Jangan ada teks lain, jangan ada format markdown backticks.
+      Contoh: {"BIN": [1, 3], "MAT": [2, 6]}
     `;
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: promptText },
-            { inline_data: { mime_type: mimeType, data: base64Image } }
-          ]
-        }]
+        contents: [{ parts: [ { text: promptText }, { inline_data: { mime_type: file.type, data: base64Image } } ] }]
       })
     });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error?.message || "Akses ditolak. Cek kembali API Key.");
+    }
 
     const result = await response.json();
     
     if (result.candidates && result.candidates.length > 0) {
       let aiResponseText = result.candidates[0].content.parts[0].text;
       
-      // Bersihkan respon dari markdown JSON
-      aiResponseText = aiResponseText.replace(/```json/g, '').replace(/```/g, '').trim();
+      // Murni mengekstrak JSON walau AI nya nambahin kata2
+      const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("AI tidak memberikan format data yang bisa dibaca.");
       
-      const parsedSchedule = JSON.parse(aiResponseText);
+      const parsedSchedule = JSON.parse(jsonMatch[0]);
       userSchedule = { ...userSchedule, ...parsedSchedule };
       
-      renderScheduleModal(); // Render ulang agar kotak langsung tercentang otomatis!
+      renderScheduleModal(); // Render ulang agar kotak langsung tercentang
       
       statusText.textContent = "Berhasil! Jangan lupa klik 'Simpan Jadwal' di bawah.";
       statusText.style.color = "var(--sage-primary)";
     } else {
-      throw new Error("AI tidak mengembalikan data yang valid.");
+      throw new Error("AI gagal mengenali gambar.");
     }
   } catch (error) {
     console.error("AI Scan Error:", error);
-    statusText.textContent = "Gagal memproses gambar. Pastikan gambar tabel jelas atau coba lagi.";
+    statusText.textContent = `Gagal: ${error.message}`;
     statusText.style.color = "#d9534f";
   } finally {
     btnScan.disabled = false;
