@@ -10,10 +10,8 @@
 </head>
 <body>
 
-  <!-- Efek Blur Latar Belakang (Aktif Saat Sidebar Terbuka) -->
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
-  <!-- Layar Login -->
   <div id="login-screen" class="screen active">
     <div class="login-card glass-panel">
       <h1>JadwalKu.</h1>
@@ -34,10 +32,8 @@
     </div>
   </div>
 
-  <!-- Layar Aplikasi -->
   <div id="app-screen" class="screen layout">
     
-    <!-- Sidebar Navigation Rail Super Smooth -->
     <aside class="sidebar glass-panel" id="sidebar">
       <div class="sidebar-header">
         <button id="btn-toggle-sidebar" class="btn-icon"><i class="ph ph-list"></i></button>
@@ -60,6 +56,9 @@
         <div id="dynamic-categories-sidebar"></div>
 
         <li class="nav-label sidebar-text" style="margin-top:12px;">Opsi</li>
+        <li class="nav-item" id="btn-open-schedule">
+          <i class="ph ph-calendar-plus"></i> <span class="sidebar-text">Atur Jadwal</span>
+        </li>
         <li class="nav-item" id="btn-open-settings">
           <i class="ph ph-gear"></i> <span class="sidebar-text">Atur Kategori</span>
         </li>
@@ -198,6 +197,25 @@
       <hr style="border: 0; border-top: 1px dashed var(--sage-light); margin: 24px 0;">
       <h4>Kategori Tersimpan</h4>
       <ul id="list-categories" class="settings-list"></ul>
+    </div>
+  </div>
+
+  <!-- Modal Pengaturan Jadwal Mingguan -->
+  <div id="modal-schedule" class="modal">
+    <div class="modal-content glass-panel" style="max-height: 85vh; overflow-y: auto; max-width: 480px;">
+      <div class="modal-header">
+        <h3>Atur Jadwal Pelajaran</h3>
+        <button id="btn-close-schedule" class="btn-close-modal"><i class="ph ph-x"></i></button>
+      </div>
+      <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.4;">
+        Centang hari untuk mengaktifkan fitur cerdas "Pertemuan Selanjutnya" pada kategori yang menggunakan opsi Deadline.
+      </p>
+      
+      <div id="schedule-matrix" style="display: flex; flex-direction: column; gap: 12px;"></div>
+      
+      <div class="modal-actions" style="margin-top: 20px;">
+        <button id="btn-save-schedule" class="btn-primary" style="width: 100%;">Simpan Jadwal</button>
+      </div>
     </div>
   </div>
 
