@@ -15,7 +15,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Data Kategori Default (Sekarang dilengkapi ikon default)
+// Data Kategori Default & Ikonnya
 let userCategories = [
   { name: "PR", icon: "ph-book-open", subs: ["BIN", "BK", "BIG", "IPS", "PPKn", "Informatika", "IPA", "MAT", "BJ", "SB", "PAI", "PJOK"], longDate: false, timeRange: false, deadline: true, startTime: false, finishFast: false },
   { name: "Organisasi", icon: "ph-users", subs: ["PMR", "OSIS", "Kader Bank Sampah", "Kader Keamanan Pangan"], longDate: true, timeRange: false, deadline: false, startTime: true, finishFast: false },
@@ -34,10 +34,9 @@ const jadwalMapel = {
   "MAT": [3, 6], "BJ": [3], "SB": [4], "PAI": [4], "PJOK": [6]
 };
 
-// Koleksi Ikon untuk Icon Picker
-const availableIcons = ['ph-folder', 'ph-book-open', 'ph-users', 'ph-briefcase', 'ph-graduation-cap', 'ph-code', 'ph-game-controller', 'ph-heart', 'ph-star', 'ph-cpu', 'ph-shopping-cart', 'ph-palette', 'ph-music-note', 'ph-camera'];
+// --- LOGIKA PEMILIH IKON ---
+const availableIcons = ['ph-folder', 'ph-book-open', 'ph-users', 'ph-briefcase', 'ph-graduation-cap', 'ph-code', 'ph-game-controller', 'ph-heart', 'ph-star', 'ph-cpu', 'ph-shopping-cart', 'ph-palette', 'ph-music-note', 'ph-camera', 'ph-calendar-check', 'ph-lightning'];
 
-// --- RENDER ICON PICKER ---
 function renderIconPicker(selected = 'ph-folder') {
   const picker = document.getElementById('icon-picker');
   picker.innerHTML = availableIcons.map(icon => `
@@ -58,6 +57,7 @@ document.getElementById('icon-picker').addEventListener('click', (e) => {
 });
 
 
+// --- FUNGSI FORMAT TANGGAL ---
 function formatDateIndo(dateStr) {
   if (!dateStr) return '';
   const [y, m, d] = dateStr.split('-');
@@ -91,32 +91,25 @@ function getTomorrowDate() {
   return tmrw.toISOString().split('T')[0];
 }
 
-// SETUP SIDEBAR MOBILE
+// SETUP SIDEBAR MOBILE (Membuka Menu & Tutup jika klik luar area)
 if (window.innerWidth <= 768) {
   document.getElementById('sidebar').classList.add('minimized');
-  // Tambahkan tombol burger di header khusus mobile
-  const header = document.querySelector('header');
-  const btnMenu = document.createElement('div');
-  btnMenu.className = 'mobile-menu-btn';
-  btnMenu.innerHTML = '<i class="ph ph-list"></i>';
-  header.prepend(btnMenu);
-  
-  btnMenu.addEventListener('click', () => {
-    document.getElementById('sidebar').classList.remove('minimized');
-  });
 }
 
-// LOGIKA KLIK LUAR SIDEBAR (Agar otomatis tutup)
+document.getElementById('btn-mobile-menu')?.addEventListener('click', () => {
+  document.getElementById('sidebar').classList.remove('minimized');
+});
+
+// LOGIKA CERDAS: TUTUP SIDEBAR JIKA KLIK DI LUAR (Click-outside to close)
 document.addEventListener('click', (e) => {
   const sidebar = document.getElementById('sidebar');
   const toggleBtn = document.getElementById('btn-toggle-sidebar');
-  const mobileBtn = document.querySelector('.mobile-menu-btn');
+  const mobileBtn = document.getElementById('btn-mobile-menu');
   
-  // Hanya berlaku jika sidebar terbuka
   if (!sidebar.classList.contains('minimized')) {
-    // Pastikan yg diklik bukan sidebar itu sendiri dan bukan tombol togglenya
+    // Jika klik terjadi di luar elemen sidebar dan tombol pemanggilnya
     if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target) && (!mobileBtn || !mobileBtn.contains(e.target))) {
-      // Abaikan jika klik terjadi di dalam modal
+      // Abaikan jika user sedang mengeklik form modal di tengah layar
       if (!e.target.closest('.modal')) {
         sidebar.classList.add('minimized');
       }
@@ -124,16 +117,17 @@ document.addEventListener('click', (e) => {
   }
 });
 
-
 async function loadUserSettings() {
   const docSnap = await getDoc(doc(db, "userSettings", currentUser.uid));
   if (docSnap.exists()) {
-    userCategories = docSnap.data().categories.map(c => ({...c, icon: c.icon || 'ph-folder'})); // Fallback icon jika data lama tidak ada
+    // Memberikan fallback 'ph-folder' jika data lama tidak punya ikon
+    userCategories = docSnap.data().categories.map(c => ({...c, icon: c.icon || 'ph-folder'}));
   } else {
     await setDoc(doc(db, "userSettings", currentUser.uid), { categories: userCategories });
   }
   applyCategoriesToUI();
 }
+
 async function saveUserSettings() {
   await setDoc(doc(db, "userSettings", currentUser.uid), { categories: userCategories });
   applyCategoriesToUI();
@@ -225,22 +219,29 @@ document.getElementById('btn-register').addEventListener('click', async () => { 
 document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
 
+// --- FUNGSI PENGATURAN KATEGORI ---
 function resetCatForm() { 
   editCatMode = null; document.getElementById('set-cat-name').value = ''; document.getElementById('set-sub-cat').value = '';
   document.querySelectorAll('.chk-label input').forEach(chk => chk.checked = false);
   renderIconPicker('ph-folder');
   document.getElementById('btn-save-cat').textContent = "Simpan Kategori"; document.getElementById('btn-cancel-edit-cat').style.display = 'none';
 }
+
 document.getElementById('btn-cancel-edit-cat').addEventListener('click', resetCatForm);
+
 document.getElementById('btn-save-cat').addEventListener('click', async () => {
   const name = document.getElementById('set-cat-name').value.trim();
   if(!name) return alert("Nama Kategori tidak boleh kosong!");
+  
   const subsRaw = document.getElementById('set-sub-cat').value;
   const newCat = {
-    name: name, icon: document.getElementById('set-cat-icon').value, subs: subsRaw ? subsRaw.split(',').map(s => s.trim()).filter(s => s) : [],
+    name: name,
+    icon: document.getElementById('set-cat-icon').value,
+    subs: subsRaw ? subsRaw.split(',').map(s => s.trim()).filter(s => s) : [],
     longDate: document.getElementById('chk-longdate').checked, timeRange: document.getElementById('chk-timerange').checked,
     deadline: document.getElementById('chk-deadline').checked, startTime: document.getElementById('chk-starttime').checked, finishFast: document.getElementById('chk-finishfast').checked
   };
+  
   if (editCatMode) {
     const idx = userCategories.findIndex(c => c.name === editCatMode); if(idx >= 0) userCategories[idx] = newCat;
     if (editCatMode !== name) {
@@ -267,6 +268,7 @@ document.getElementById('list-categories').addEventListener('click', async (e) =
       document.getElementById('chk-deadline').checked = cat.deadline; document.getElementById('chk-starttime').checked = cat.startTime;
       document.getElementById('chk-finishfast').checked = cat.finishFast;
       renderIconPicker(cat.icon || 'ph-folder');
+      
       editCatMode = cat.name; document.getElementById('btn-save-cat').textContent = "Update Kategori"; document.getElementById('btn-cancel-edit-cat').style.display = 'inline-block';
     }
   }
@@ -280,18 +282,20 @@ function attachSidebarListeners() {
       if (item.id === 'btn-open-settings') return;
       document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); item.classList.add('active');
       currentFilter = { type: item.getAttribute('data-filter'), value: item.getAttribute('data-value') };
+      
       if(window.innerWidth > 768) { document.getElementById('header-subtitle').textContent = `Menampilkan: ${item.querySelector('.sidebar-text').textContent}`; } 
+      else { document.getElementById('sidebar').classList.add('minimized'); } // Tutup otomatis di mobile saat menu ditekan
+      
       renderTasksUI();
-      // Auto tutup sidebar di mobile jika pilih menu
-      if(window.innerWidth <= 768) {
-        document.getElementById('sidebar').classList.add('minimized');
-      }
     });
   });
 }
-document.getElementById('btn-toggle-sidebar').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('minimized'); });
 
-// SIMPAN TUGAS
+document.getElementById('btn-toggle-sidebar').addEventListener('click', () => { 
+  document.getElementById('sidebar').classList.toggle('minimized'); 
+});
+
+// SIMPAN & UPDATE TUGAS
 document.getElementById('btn-cancel').addEventListener('click', () => {
   document.getElementById('modal').classList.remove('active');
   editingTaskId = null;
@@ -302,10 +306,14 @@ document.getElementById('btn-add-task').addEventListener('click', () => {
   document.getElementById('modal-form-title').textContent = "Buat Kegiatan Baru";
   document.getElementById('btn-save').textContent = "Simpan";
   
-  document.getElementById('input-title').value = ''; document.getElementById('input-notes').value = ''; 
-  document.getElementById('val-date-start').value = ''; document.getElementById('val-date-end').value = '';
-  document.getElementById('val-date-deadline').value = ''; document.getElementById('val-default-date').value = '';
-  document.getElementById('val-time-start').value = ''; document.getElementById('val-time-end').value = '';
+  document.getElementById('input-title').value = '';
+  document.getElementById('input-notes').value = ''; 
+  document.getElementById('val-date-start').value = '';
+  document.getElementById('val-date-end').value = '';
+  document.getElementById('val-date-deadline').value = '';
+  document.getElementById('val-default-date').value = '';
+  document.getElementById('val-time-start').value = '';
+  document.getElementById('val-time-end').value = '';
   document.getElementById('val-time-only').value = '';
 
   if(userCategories.length > 0) {
