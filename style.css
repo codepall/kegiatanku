@@ -164,3 +164,12 @@ textarea:focus { border-color: var(--sage-primary); }
   .chk-label { font-size: 11px; }
   .settings-list li { font-size: 11px; padding: 8px; }
 }
+
+/* --- Tambahan Tombol Edit Card --- */
+.btn-edit-task { background: transparent; border: 1px solid rgba(138, 158, 134, 0.4); color: var(--sage-dark); width: 28px; height: 28px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+.btn-edit-task:hover { background: var(--sage-light); color: var(--text-main); }
+.btn-delete-task { background: #ffecec; border: 1px solid #ffdcdc; color: #d9534f; width: 28px; height: 28px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+.btn-delete-task:hover { background: #d9534f; color: white; }
+
+/* Menyesuaikan jarak tombol agar rapi */
+.task-actions { gap: 6px; }
