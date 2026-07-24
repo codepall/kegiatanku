@@ -9,7 +9,6 @@
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(255, 255, 255, 0.5);
   --shadow: 0 8px 32px rgba(107, 125, 104, 0.12);
-  /* Kurva Super Smooth ala Premium UI */
   --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
