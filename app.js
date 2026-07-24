@@ -15,6 +15,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Data Kategori Default & Ikonnya
 let userCategories = [
   { name: "PR", icon: "ph-book-open", subs: ["BIN", "BK", "BIG", "IPS", "PPKn", "Informatika", "IPA", "MAT", "BJ", "SB", "PAI", "PJOK"], longDate: false, timeRange: false, deadline: true, startTime: false, finishFast: false },
   { name: "Organisasi", icon: "ph-users", subs: ["PMR", "OSIS", "Kader Bank Sampah", "Kader Keamanan Pangan"], longDate: true, timeRange: false, deadline: false, startTime: true, finishFast: false },
@@ -96,7 +97,7 @@ if (window.innerWidth <= 768) {
 
 // Tombol Toggle Sidebar
 document.getElementById('btn-toggle-sidebar').addEventListener('click', (e) => { 
-  e.stopPropagation(); // Cegah event klik luar agar tidak bentrok
+  e.stopPropagation(); 
   document.getElementById('sidebar').classList.toggle('minimized'); 
 });
 
@@ -114,7 +115,7 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Event Delegation untuk Menu Sidebar (Rahasia Bebas Bug "Ilang-ilangan")
+// Event Delegation untuk Menu Sidebar
 document.getElementById('sidebar-nav').addEventListener('click', (e) => {
   const item = e.target.closest('.nav-item');
   if (!item) return;
@@ -135,11 +136,8 @@ document.getElementById('sidebar-nav').addEventListener('click', (e) => {
   }
   
   renderTasksUI();
-
-  // Otomatis minimize di layar apapun setelah klik menu (kalau mau layar besar tetap terbuka, tambahkan if)
   document.getElementById('sidebar').classList.add('minimized');
 });
-
 
 // --- KATEGORI & SETTINGS ---
 async function loadUserSettings() {
@@ -160,14 +158,12 @@ async function saveUserSettings() {
 function applyCategoriesToUI() {
   document.getElementById('input-category').innerHTML = userCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
   
-  // Render Kategori ke Sidebar
   document.getElementById('dynamic-categories-sidebar').innerHTML = userCategories.map(c => `
     <li class="nav-item" data-filter="category" data-value="${c.name}">
       <i class="ph ${c.icon}"></i> <span class="sidebar-text">${c.name}</span>
     </li>
   `).join('');
 
-  // Render List Pengaturan
   document.getElementById('list-categories').innerHTML = userCategories.map(c => `
     <li>
       <div class="cat-info">
@@ -239,7 +235,6 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('login-screen').classList.add('active');
   }
 });
-
 document.getElementById('btn-login').addEventListener('click', async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } catch (e) { document.getElementById('login-error').textContent = 'Gagal login.'; }});
 document.getElementById('btn-register').addEventListener('click', async () => { try { await createUserWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } catch (e) { document.getElementById('login-error').textContent = 'Gagal daftar.'; }});
 document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
@@ -252,21 +247,16 @@ function resetCatForm() {
 }
 
 document.getElementById('btn-cancel-edit-cat').addEventListener('click', resetCatForm);
-document.getElementById('btn-close-settings').addEventListener('click', () => document.getElementById('modal-settings').classList.remove('active'));
-
 document.getElementById('btn-save-cat').addEventListener('click', async () => {
   const name = document.getElementById('set-cat-name').value.trim();
   if(!name) return alert("Nama Kategori tidak boleh kosong!");
   
   const subsRaw = document.getElementById('set-sub-cat').value;
   const newCat = {
-    name: name,
-    icon: document.getElementById('set-cat-icon').value,
-    subs: subsRaw ? subsRaw.split(',').map(s => s.trim()).filter(s => s) : [],
+    name: name, icon: document.getElementById('set-cat-icon').value, subs: subsRaw ? subsRaw.split(',').map(s => s.trim()).filter(s => s) : [],
     longDate: document.getElementById('chk-longdate').checked, timeRange: document.getElementById('chk-timerange').checked,
     deadline: document.getElementById('chk-deadline').checked, startTime: document.getElementById('chk-starttime').checked, finishFast: document.getElementById('chk-finishfast').checked
   };
-  
   if (editCatMode) {
     const idx = userCategories.findIndex(c => c.name === editCatMode); if(idx >= 0) userCategories[idx] = newCat;
     if (editCatMode !== name) {
@@ -282,7 +272,7 @@ document.getElementById('btn-save-cat').addEventListener('click', async () => {
 
 document.getElementById('list-categories').addEventListener('click', async (e) => {
   const btnDel = e.target.closest('.btn-del-cat'); const btnEdit = e.target.closest('.btn-edit-cat');
-  if(btnDel && confirm("Hapus kategori ini?")) {
+  if(btnDel && confirm("Hapus kategori ini? (Catatan: Kegiatan yg sudah ada di kategori ini tidak akan terhapus)")) {
     userCategories = userCategories.filter(c => c.name !== btnDel.getAttribute('data-name')); await saveUserSettings();
   }
   if(btnEdit) {
@@ -293,22 +283,25 @@ document.getElementById('list-categories').addEventListener('click', async (e) =
       document.getElementById('chk-deadline').checked = cat.deadline; document.getElementById('chk-starttime').checked = cat.startTime;
       document.getElementById('chk-finishfast').checked = cat.finishFast;
       renderIconPicker(cat.icon || 'ph-folder');
-      
       editCatMode = cat.name; document.getElementById('btn-save-cat').textContent = "Update Kategori"; document.getElementById('btn-cancel-edit-cat').style.display = 'inline-block';
     }
   }
 });
+document.getElementById('btn-close-settings').addEventListener('click', () => document.getElementById('modal-settings').classList.remove('active'));
 
-
-// SIMPAN TUGAS
+// LOGIKA SILANG (X) UNTUK TUTUP MODAL
 document.getElementById('btn-cancel').addEventListener('click', () => { document.getElementById('modal').classList.remove('active'); editingTaskId = null; });
+
+
+// --- SIMPAN & UPDATE KEGIATAN ---
 document.getElementById('btn-add-task').addEventListener('click', () => {
-  editingTaskId = null; document.getElementById('modal-form-title').textContent = "Buat Kegiatan Baru"; document.getElementById('btn-save').textContent = "Simpan";
+  editingTaskId = null; document.getElementById('modal-form-title').textContent = "Buat Kegiatan Baru"; document.getElementById('btn-save').textContent = "Simpan Kegiatan";
   document.getElementById('input-title').value = ''; document.getElementById('input-notes').value = ''; 
   document.getElementById('val-date-start').value = ''; document.getElementById('val-date-end').value = '';
   document.getElementById('val-date-deadline').value = ''; document.getElementById('val-default-date').value = '';
   document.getElementById('val-time-start').value = ''; document.getElementById('val-time-end').value = '';
   document.getElementById('val-time-only').value = '';
+
   if(userCategories.length > 0) { document.getElementById('input-category').value = userCategories[0].name; updateFormInputs(); }
   document.getElementById('modal').classList.add('active');
 });
@@ -371,8 +364,9 @@ document.getElementById('btn-save').addEventListener('click', async () => {
     else await addDoc(collection(db, "tasks"), payload);
     document.getElementById('modal').classList.remove('active');
     editingTaskId = null;
-  } catch (error) { console.error(error); alert("Gagal menyimpan."); } finally { btnSave.textContent = "Simpan"; }
+  } catch (error) { console.error(error); alert("Gagal menyimpan."); } finally { btnSave.textContent = "Simpan Kegiatan"; }
 });
+
 
 function fetchTasksFromDB() {
   onSnapshot(query(collection(db, "tasks"), where("uid", "==", currentUser.uid)), (snapshot) => {
@@ -443,7 +437,7 @@ function renderTasksUI() {
     card.querySelector('.btn-edit-task').addEventListener('click', () => {
       editingTaskId = task.id;
       document.getElementById('modal-form-title').textContent = "Edit Kegiatan";
-      document.getElementById('btn-save').textContent = "Update";
+      document.getElementById('btn-save').textContent = "Update Kegiatan";
       
       document.getElementById('input-title').value = task.title;
       document.getElementById('input-notes').value = task.notes || '';
