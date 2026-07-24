@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- KUNCI API GEMINI KAMU (PASTIKAN TIDAK ADA SPASI TERTINGGAL) ---
+// --- KUNCI API GEMINI KAMU (PENGECEKAN KETAT DIHAPUS) ---
 const GEMINI_API_KEY = "AQ.Ab8RN6L89IrCogthMiB0M0BwCe2ahZOzK6Hi8DkxGavj7AFNEw";
 
 const firebaseConfig = {
@@ -241,7 +241,7 @@ function fileToBase64(file) {
   });
 }
 
-// --- FUNGSI SCAN JADWAL DENGAN GEMINI AI (KEBAL ERROR) ---
+// --- FUNGSI SCAN JADWAL DENGAN GEMINI AI (ANTI ERROR) ---
 document.getElementById('btn-scan-ai').addEventListener('click', async () => {
   const fileInput = document.getElementById('upload-schedule-img');
   const statusText = document.getElementById('ai-status');
@@ -259,10 +259,8 @@ document.getElementById('btn-scan-ai').addEventListener('click', async () => {
   btnScan.innerHTML = `<i class="ph ph-spinner-gap"></i> Loading...`;
 
   try {
+    // Menghapus spasi yang tidak sengaja tersalin
     const rawKey = GEMINI_API_KEY.trim();
-    if (!rawKey.startsWith("AIzaSy")) {
-      throw new Error("Kunci API salah! Harus berawalan 'AIzaSy'.");
-    }
 
     const base64Image = await fileToBase64(file);
     const promptText = `
@@ -291,7 +289,7 @@ document.getElementById('btn-scan-ai').addEventListener('click', async () => {
       let aiResponseText = result.candidates[0].content.parts[0].text;
       
       const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("AI membalas dengan format yang salah.");
+      if (!jsonMatch) throw new Error("AI membalas dengan format yang tidak bisa dibaca.");
       
       const parsedSchedule = JSON.parse(jsonMatch[0]);
       userSchedule = { ...userSchedule, ...parsedSchedule };
