@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, si
 import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // --- API KEY GEMINI KAMU (Pastikan valid) ---
-const GEMINI_API_KEY = "AQ.Ab8RN6LWtsDtuEuNDMaYwNj2-Ljt8_nKZP_TUot5MkIX5svcpA"; 
+const GEMINI_API_KEY = "AQ.Ab8RN6L89IrCogthMiB0M0BwCe2ahZOzK6Hi8DkxGavj7AFNEw"; 
 
 const firebaseConfig = {
   apiKey: "AIzaSyDPsRwRf72xaQkSdGn89WdwA3sbJI2Z-z0",
