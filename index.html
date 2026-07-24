@@ -10,8 +10,10 @@
 </head>
 <body>
 
+  <!-- Efek Blur Latar Belakang -->
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
+  <!-- Layar Login -->
   <div id="login-screen" class="screen active">
     <div class="login-card glass-panel">
       <h1>JadwalKu.</h1>
@@ -32,8 +34,10 @@
     </div>
   </div>
 
+  <!-- Layar Aplikasi -->
   <div id="app-screen" class="screen layout">
     
+    <!-- Sidebar Navigation Rail -->
     <aside class="sidebar glass-panel" id="sidebar">
       <div class="sidebar-header">
         <button id="btn-toggle-sidebar" class="btn-icon"><i class="ph ph-list"></i></button>
@@ -89,10 +93,10 @@
 
   <!-- Modal Tambah / Edit Kegiatan -->
   <div id="modal" class="modal">
-    <div class="modal-content glass-panel">
+    <div class="modal-content glass-panel" style="max-height: 90vh; overflow-y: auto;">
       <div class="modal-header">
         <h3 id="modal-form-title">Buat Kegiatan Baru</h3>
-        <button id="btn-cancel" class="btn-close-modal"><i class="ph ph-x"></i></button>
+        <button class="btn-close-modal"><i class="ph ph-x"></i></button>
       </div>
       
       <div class="input-group">
@@ -150,7 +154,7 @@
         <textarea id="input-notes" rows="2" placeholder="Tulis catatan tambahan di sini..."></textarea>
       </div>
 
-      <div class="modal-actions">
+      <div class="modal-actions" style="margin-top: 12px;">
         <button id="btn-save" class="btn-primary" style="width: 100%;">Simpan Kegiatan</button>
       </div>
     </div>
@@ -161,7 +165,7 @@
     <div class="modal-content glass-panel" style="max-height: 85vh; overflow-y: auto; max-width: 460px;">
       <div class="modal-header">
         <h3>Pengaturan Kategori</h3>
-        <button id="btn-close-settings" class="btn-close-modal"><i class="ph ph-x"></i></button>
+        <button class="btn-close-modal"><i class="ph ph-x"></i></button>
       </div>
       
       <div class="settings-form">
@@ -200,17 +204,28 @@
     </div>
   </div>
 
-  <!-- Modal Pengaturan Jadwal Mingguan -->
+  <!-- Modal Pengaturan Jadwal Mingguan + Scan AI -->
   <div id="modal-schedule" class="modal">
     <div class="modal-content glass-panel" style="max-height: 85vh; overflow-y: auto; max-width: 480px;">
       <div class="modal-header">
         <h3>Atur Jadwal Pelajaran</h3>
-        <button id="btn-close-schedule" class="btn-close-modal"><i class="ph ph-x"></i></button>
+        <button class="btn-close-modal"><i class="ph ph-x"></i></button>
       </div>
-      <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.4;">
-        Centang hari untuk mengaktifkan fitur cerdas "Pertemuan Selanjutnya" pada kategori yang menggunakan opsi Deadline.
-      </p>
       
+      <!-- AREA SCAN AI -->
+      <div class="ai-scan-area">
+        <label style="font-size: 11px; font-weight: 600; color: var(--sage-dark);">Scan Jadwal Otomatis (AI)</label>
+        <p style="font-size: 10px; color: var(--text-muted); margin-bottom: 8px;">Upload foto tabel jadwal pelajaranmu, AI akan otomatis membacanya.</p>
+        <div class="form-row">
+          <input type="file" id="upload-schedule-img" accept="image/*" style="font-size: 11px; padding: 6px; width: 100%;">
+          <button id="btn-scan-ai" class="btn-primary" style="padding: 6px 12px; font-size: 11px; white-space: nowrap;"><i class="ph ph-magic-wand"></i> Scan AI</button>
+        </div>
+        <p id="ai-status" style="font-size: 10px; color: #d9534f; margin-top: 6px; font-style: italic;"></p>
+      </div>
+
+      <hr style="border: 0; border-top: 1px dashed var(--sage-light); margin: 16px 0;">
+      
+      <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.4;">Atau atur manual dengan mencentang hari di bawah ini:</p>
       <div id="schedule-matrix" style="display: flex; flex-direction: column; gap: 12px;"></div>
       
       <div class="modal-actions" style="margin-top: 20px;">
