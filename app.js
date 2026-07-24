@@ -2,6 +2,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+// --- KUNCI API GEMINI KAMU ---
+const GEMINI_API_KEY = "AQ.Ab8RN6LWtsDtuEuNDMaYwNj2-Ljt8_nKZP_TUot5MkIX5svcpA";
+
 const firebaseConfig = {
   apiKey: "AIzaSyDPsRwRf72xaQkSdGn89WdwA3sbJI2Z-z0",
   authDomain: "kegiatanku-503210.firebaseapp.com",
@@ -19,7 +22,7 @@ const db = getFirestore(app);
 let userCategories = [
   { name: "PR", icon: "ph-book-open", subs: ["BIN", "BK", "BIG", "IPS", "PPKn", "Informatika", "IPA", "MAT", "BJ", "SB", "PAI", "PJOK"], longDate: false, timeRange: false, deadline: true, startTime: false, finishFast: false }
 ];
-let userSchedule = {}; // Objek Penyimpanan Jadwal Dinamis. Format: { "BIN": [1, 3, 4] }
+let userSchedule = {}; // Jadwal Dinamis. Contoh hasil scan: { "BIN": [1, 3, 4], "MAT": [2, 6] }
 
 let currentUser = null;
 let allTasks = [];
@@ -57,12 +60,12 @@ function formatDateIndo(dateStr) {
   return `${days[dateObj.getDay()]}, ${d} ${months[dateObj.getMonth()]} ${y}`;
 }
 
+// LOGIKA CERDAS PERTEMUAN SELANJUTNYA MEMBACA JADWAL DINAMIS
 function getNextMeetingDate(subCat) {
-  // SEKARANG MENGGUNAKAN JADWAL DINAMIS!
   const daysArr = userSchedule[subCat];
   if (!daysArr || daysArr.length === 0) return ""; 
   const today = new Date();
-  let currentDay = today.getDay(); 
+  let currentDay = today.getDay(); // 0=Minggu, 1=Senin ... 6=Sabtu
   let diff = 1; 
   while(diff <= 7) {
     let checkDay = (currentDay + diff) % 7;
@@ -134,7 +137,7 @@ document.getElementById('sidebar-nav').addEventListener('click', (e) => {
 });
 
 
-// --- KATEGORI, SCHEDULE & SETTINGS ---
+// --- KATEGORI & SCHEDULE ---
 async function loadUserSettings() {
   const docSnap = await getDoc(doc(db, "userSettings", currentUser.uid));
   if (docSnap.exists()) {
@@ -215,11 +218,12 @@ function renderScheduleModal() {
   });
 }
 
+// SIMPAN JADWAL MANUAL
 document.getElementById('btn-save-schedule').addEventListener('click', async () => {
   const btn = document.getElementById('btn-save-schedule');
   btn.textContent = "Menyimpan...";
   
-  userSchedule = {}; // reset
+  userSchedule = {}; 
   document.querySelectorAll('.chk-day:checked').forEach(chk => {
     const sub = chk.getAttribute('data-sub');
     const dayId = parseInt(chk.value);
@@ -230,6 +234,85 @@ document.getElementById('btn-save-schedule').addEventListener('click', async () 
   await saveUserSettings(); 
   document.getElementById('modal-schedule').classList.remove('active');
   btn.textContent = "Simpan Jadwal";
+});
+
+// --- FUNGSI MENGUBAH GAMBAR KE BASE64 UNTUK AI ---
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = error => reject(error);
+  });
+}
+
+// --- FUNGSI SCAN JADWAL DENGAN GEMINI AI ---
+document.getElementById('btn-scan-ai').addEventListener('click', async () => {
+  const fileInput = document.getElementById('upload-schedule-img');
+  const statusText = document.getElementById('ai-status');
+  const btnScan = document.getElementById('btn-scan-ai');
+
+  if (fileInput.files.length === 0) {
+    statusText.textContent = "Pilih gambar jadwal terlebih dahulu!";
+    return;
+  }
+
+  const file = fileInput.files[0];
+  statusText.textContent = "AI sedang membaca jadwalmu... (Bisa memakan waktu 10-20 detik)";
+  statusText.style.color = "var(--text-muted)";
+  btnScan.disabled = true;
+  btnScan.innerHTML = `<i class="ph ph-spinner-gap"></i> Loading...`;
+
+  try {
+    const base64Image = await fileToBase64(file);
+    const mimeType = file.type;
+
+    const promptText = `
+      Analisis gambar jadwal pelajaran ini. Ekstrak data mata pelajaran beserta harinya menjadi format JSON murni tanpa format markdown (tanpa \`\`\`json).
+      Kunci (key) adalah singkatan mata pelajaran yang kamu temukan di tabel, dan nilainya (value) adalah array angka hari berdasar kolomnya (1=Senin, 2=Selasa, 3=Rabu, 4=Kamis, 5=Jumat, 6=Sabtu).
+      Abaikan nama guru. Fokus pada mata pelajaran.
+      Contoh output yang diharapkan: {"BIN": [1, 3], "MAT": [2, 6], "IPA": [2, 5]}
+    `;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: promptText },
+            { inline_data: { mime_type: mimeType, data: base64Image } }
+          ]
+        }]
+      })
+    });
+
+    const result = await response.json();
+    
+    if (result.candidates && result.candidates.length > 0) {
+      let aiResponseText = result.candidates[0].content.parts[0].text;
+      
+      // Bersihkan respon dari markdown JSON
+      aiResponseText = aiResponseText.replace(/```json/g, '').replace(/```/g, '').trim();
+      
+      const parsedSchedule = JSON.parse(aiResponseText);
+      userSchedule = { ...userSchedule, ...parsedSchedule };
+      
+      renderScheduleModal(); // Render ulang agar kotak langsung tercentang otomatis!
+      
+      statusText.textContent = "Berhasil! Jangan lupa klik 'Simpan Jadwal' di bawah.";
+      statusText.style.color = "var(--sage-primary)";
+    } else {
+      throw new Error("AI tidak mengembalikan data yang valid.");
+    }
+  } catch (error) {
+    console.error("AI Scan Error:", error);
+    statusText.textContent = "Gagal memproses gambar. Pastikan gambar tabel jelas atau coba lagi.";
+    statusText.style.color = "#d9534f";
+  } finally {
+    btnScan.disabled = false;
+    btnScan.innerHTML = `<i class="ph ph-magic-wand"></i> Scan AI`;
+  }
 });
 
 function updateFormInputs() {
@@ -245,7 +328,6 @@ function updateFormInputs() {
   document.getElementById('field-long-date').style.display = cat.longDate ? 'flex' : 'none';
   document.getElementById('field-time-range').style.display = cat.timeRange ? 'flex' : 'none';
   
-  // Opsi Deadline terintegrasi dengan sub-kategori
   if(cat.deadline) {
     if(cat.subs.length > 0) {
       document.getElementById('field-pr-deadline-type').style.display = 'flex';
@@ -328,7 +410,7 @@ document.getElementById('btn-save-cat').addEventListener('click', async () => {
 
 document.getElementById('list-categories').addEventListener('click', async (e) => {
   const btnDel = e.target.closest('.btn-del-cat'); const btnEdit = e.target.closest('.btn-edit-cat');
-  if(btnDel && confirm("Hapus kategori ini?")) {
+  if(btnDel && confirm("Hapus kategori ini? (Catatan: Kegiatan yg sudah ada di kategori ini tidak akan terhapus)")) {
     userCategories = userCategories.filter(c => c.name !== btnDel.getAttribute('data-name')); await saveUserSettings();
   }
   if(btnEdit) {
