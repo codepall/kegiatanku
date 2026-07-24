@@ -79,13 +79,18 @@
 
     <main class="content">
       <div class="content-wrapper">
-        <header>
-          <div>
+        <!-- HEADER DENGAN FITUR CARI TANGGAL -->
+        <header class="main-header">
+          <div class="header-titles">
             <h1 id="greeting">Halo!</h1>
             <p id="header-subtitle">Berikut adalah jadwalmu hari ini.</p>
           </div>
-          <button id="btn-add-task" class="btn-primary">+ Kegiatan</button>
+          <div class="header-actions">
+            <input type="date" id="search-date-input" class="search-date" title="Cari berdasarkan tanggal">
+            <button id="btn-add-task" class="btn-primary">+ Kegiatan</button>
+          </div>
         </header>
+        
         <div class="task-container" id="task-list"></div>
       </div>
     </main>
@@ -204,7 +209,7 @@
     </div>
   </div>
 
-  <!-- Modal Pengaturan Jadwal Mingguan + Scan AI -->
+  <!-- Modal Pengaturan Jadwal Mingguan MANUAL -->
   <div id="modal-schedule" class="modal">
     <div class="modal-content glass-panel" style="max-height: 85vh; overflow-y: auto; max-width: 480px;">
       <div class="modal-header">
@@ -212,20 +217,7 @@
         <button class="btn-close-modal"><i class="ph ph-x"></i></button>
       </div>
       
-      <!-- AREA SCAN AI -->
-      <div class="ai-scan-area">
-        <label style="font-size: 11px; font-weight: 600; color: var(--sage-dark);">Scan Jadwal Otomatis (AI)</label>
-        <p style="font-size: 10px; color: var(--text-muted); margin-bottom: 8px;">Upload foto tabel jadwal pelajaranmu, AI akan otomatis membacanya.</p>
-        <div class="form-row">
-          <input type="file" id="upload-schedule-img" accept="image/*" style="font-size: 11px; padding: 6px; width: 100%;">
-          <button id="btn-scan-ai" class="btn-primary" style="padding: 6px 12px; font-size: 11px; white-space: nowrap;"><i class="ph ph-magic-wand"></i> Scan AI</button>
-        </div>
-        <p id="ai-status" style="font-size: 10px; color: #d9534f; margin-top: 6px; font-style: italic;"></p>
-      </div>
-
-      <hr style="border: 0; border-top: 1px dashed var(--sage-light); margin: 16px 0;">
-      
-      <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.4;">Atau atur manual dengan mencentang hari di bawah ini:</p>
+      <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.4;">Atur secara manual dengan mencentang hari di bawah ini untuk mengaktifkan fitur deadline otomatis:</p>
       <div id="schedule-matrix" style="display: flex; flex-direction: column; gap: 12px;"></div>
       
       <div class="modal-actions" style="margin-top: 20px;">
