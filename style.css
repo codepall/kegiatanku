@@ -33,6 +33,7 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 .login-actions { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
 #login-error { color: #d9534f; font-size: 11px; margin-top: 10px; min-height: 16px; }
 
+/* EFEK BLUR OVERLAY SAAT SIDEBAR TERBUKA */
 .sidebar-overlay { 
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
   background: rgba(45, 54, 42, 0.1); backdrop-filter: blur(4px); 
@@ -42,6 +43,7 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 
 .layout { height: 100vh; width: 100vw; display: flex; position: relative; }
 
+/* SIDEBAR RAIL NAVIGATION SUPER SMOOTH */
 .sidebar { 
   width: 250px; 
   padding: 24px 12px; 
@@ -51,7 +53,6 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
   position: relative; z-index: 100; 
   overflow: hidden; white-space: nowrap; 
 }
-
 .sidebar.minimized { width: 72px; }
 
 .sidebar-header { display: flex; align-items: center; padding: 0 12px; margin-bottom: 24px; transition: padding 0.6s var(--ease-smooth); }
@@ -61,7 +62,6 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 
 .nav-links { list-style: none; flex-grow: 1; overflow-y: auto; overflow-x: hidden; width: 100%; }
 .nav-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; padding: 12px 12px 4px 16px; font-weight: 600; }
-
 .nav-item { 
   display: flex; align-items: center; 
   padding: 12px; border-radius: 12px; margin-bottom: 4px; 
@@ -77,10 +77,11 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 .sidebar.minimized .sidebar-text { opacity: 0; pointer-events: none; }
 
 .user-profile { display: flex; align-items: center; padding: 20px 10px 0 10px; border-top: 1px solid var(--glass-border); }
-.user-profile img { width: 28px; height: 28px; min-width: 28px; border-radius: 50%; }
+.user-profile img { width: 28px; height: 28px; min-width: 28px; border-radius: 50%; } 
 .user-info { display: flex; flex-direction: column; margin-left: 12px; }
 #btn-logout { background: none; border: none; color: #d9534f; cursor: pointer; text-align: left; font-size: 11px; font-weight: 500; padding: 0; }
 
+/* KONTEN UTAMA */
 .content { flex-grow: 1; padding: 32px; overflow-y: auto; display: flex; justify-content: center; position: relative; z-index: 1; }
 .content-wrapper { width: 100%; max-width: 760px; }
 header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
@@ -89,6 +90,7 @@ header p { color: var(--text-muted); font-size: 13px; }
 
 .btn-primary { background-color: var(--sage-primary); color: var(--white); border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background 0.2s; }
 .btn-primary:hover { background-color: var(--sage-dark); }
+.btn-primary:disabled { background-color: var(--sage-light); cursor: not-allowed; }
 .btn-secondary { background-color: transparent; color: var(--text-muted); border: 1px solid var(--sage-dark); padding: 10px 20px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 500; }
 
 .task-container { display: flex; flex-direction: column; gap: 12px; }
@@ -124,6 +126,7 @@ textarea:focus { border-color: var(--sage-primary); }
 .btn-delete-task { background: #ffecec; border-color: #ffdcdc; color: #d9534f; }
 .btn-delete-task:hover { background: #d9534f; color: white; }
 
+/* --- MODAL & HEADER SILANG --- */
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3); justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(6px); }
 .modal.active { display: flex; }
 .modal-content { padding: 24px; border-radius: 20px; width: 100%; max-width: 420px; }
@@ -133,10 +136,16 @@ textarea:focus { border-color: var(--sage-primary); }
 .btn-close-modal:hover { color: #d9534f; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 
+/* STYLE PEMILIH IKON */
 .icon-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 .icon-option { font-size: 20px; padding: 8px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; color: var(--text-muted); transition: 0.2s; display: flex; align-items: center; justify-content: center; }
 .icon-option:hover { background: rgba(138, 158, 134, 0.2); }
 .icon-option.selected { border-color: var(--sage-primary); color: var(--sage-primary); background: rgba(138, 158, 134, 0.15); box-shadow: 0 2px 8px rgba(138,158,134,0.3); }
+
+/* STYLE AI SCAN AREA */
+.ai-scan-area { background: rgba(138, 158, 134, 0.1); border: 1px solid var(--sage-light); padding: 12px; border-radius: 12px; margin-bottom: 8px; }
+#upload-schedule-img::file-selector-button { background: var(--white); border: 1px solid var(--sage-light); padding: 4px 8px; border-radius: 6px; color: var(--sage-dark); cursor: pointer; font-family: 'Poppins', sans-serif; transition: 0.2s; }
+#upload-schedule-img::file-selector-button:hover { background: var(--sage-light); }
 
 .settings-form { background: rgba(255,255,255,0.5); padding: 16px; border-radius: 12px; border: 1px solid var(--sage-light); }
 .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
@@ -153,6 +162,7 @@ textarea:focus { border-color: var(--sage-primary); }
 .btn-del-cat { background: #ffecec; color: #d9534f; }
 .btn-del-cat:hover { background: #d9534f; color: white; }
 
+/* --- MOBILE RESPONSIVE --- */
 @media (max-width: 768px) {
   body { font-size: 12px; }
   .sidebar { position: fixed; top: 0; left: 0; height: 100vh; box-shadow: 4px 0 20px rgba(0,0,0,0.15); }
