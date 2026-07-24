@@ -12,21 +12,9 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
-body { 
-  background-color: var(--bg-main); 
-  background-image: radial-gradient(circle at top right, #f8faf7, #eef1ec);
-  color: var(--text-main); 
-  overflow: hidden; 
-}
+body { background-color: var(--bg-main); background-image: radial-gradient(circle at top right, #f8faf7, #eef1ec); color: var(--text-main); overflow: hidden; }
 
-.glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow);
-}
-
+.glass-panel { background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--glass-border); box-shadow: var(--shadow); }
 .screen { display: none; }
 .screen.active { display: flex; }
 
@@ -81,25 +69,37 @@ header p { color: var(--text-muted); font-size: 13px; }
 .task-card:hover { transform: translateY(-2px); border-color: var(--sage-light); }
 .task-card.completed { opacity: 0.5; }
 .task-card.completed h3 { text-decoration: line-through; color: var(--text-muted); }
-.task-info { display: flex; gap: 16px; align-items: center; }
-.task-checkbox { width: 20px; height: 20px; accent-color: var(--sage-primary); cursor: pointer; }
-.task-details h3 { font-size: 14px; margin-bottom: 4px; font-weight: 600; }
-.task-meta { font-size: 11px; color: var(--text-muted); display: flex; gap: 8px; flex-wrap: wrap; }
-.task-meta span { background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 6px; font-weight: 500; border: 1px solid rgba(0,0,0,0.05);}
+.task-info { display: flex; gap: 16px; align-items: flex-start; width: 100%; }
+.task-checkbox { width: 20px; height: 20px; accent-color: var(--sage-primary); cursor: pointer; margin-top: 2px; }
+.task-details { display: flex; flex-direction: column; width: 100%; }
+.task-details h3 { font-size: 15px; margin-bottom: 6px; font-weight: 600; }
+
+/* PERUBAHAN STRUKTUR TATA LETAK DETAIL (VERTIKAL/BARIS) */
+.task-meta { display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
+.meta-schedule { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
+.meta-row { display: flex; align-items: center; gap: 6px; }
+.meta-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.meta-badges span { background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 6px; font-weight: 500; border: 1px solid rgba(0,0,0,0.05); font-size: 11px;}
+.badge-cat { background: var(--sage-light) !important; color: var(--sage-dark) !important; font-weight: 600 !important; }
+
+/* CATATAN BISA DI-ENTER */
+textarea { resize: vertical; padding: 10px; border: 1px solid var(--sage-light); border-radius: 8px; font-size: 13px; outline: none; background: rgba(255,255,255,0.8); }
+textarea:focus { border-color: var(--sage-primary); }
+.notes-display { font-size: 12px; color: var(--sage-dark); background: rgba(138, 158, 134, 0.1); padding: 10px 14px; border-radius: 8px; margin-top: 6px; font-style: italic; border-left: 3px solid var(--sage-primary); white-space: pre-wrap; line-height: 1.5; }
+
+.task-actions { display: flex; gap: 6px; align-items: center; margin-left: 12px; flex-shrink: 0; }
+.btn-finish { background: var(--sage-light); color: var(--sage-dark); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 4px; }
+.btn-finish:hover { background: var(--sage-primary); color: var(--white); }
+.btn-edit-task { background: transparent; border: 1px solid rgba(138, 158, 134, 0.4); color: var(--sage-dark); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+.btn-edit-task:hover { background: var(--sage-light); color: var(--text-main); }
+.btn-delete-task { background: #ffecec; border: 1px solid #ffdcdc; color: #d9534f; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+.btn-delete-task:hover { background: #d9534f; color: white; }
 
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(6px); }
 .modal.active { display: flex; }
 .modal-content { padding: 24px; border-radius: 20px; width: 100%; max-width: 420px; }
 .modal-content h3 { font-size: 18px; color: var(--sage-dark); margin-bottom: 16px; text-align: center; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
-
-textarea { resize: vertical; padding: 10px; border: 1px solid var(--sage-light); border-radius: 8px; font-size: 13px; outline: none; background: rgba(255,255,255,0.8); }
-textarea:focus { border-color: var(--sage-primary); }
-
-.task-actions { display: flex; gap: 8px; align-items: center; }
-.btn-finish { background: var(--sage-light); color: var(--sage-dark); border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 4px; }
-.btn-finish:hover { background: var(--sage-primary); color: var(--white); }
-.notes-display { font-size: 11px; color: var(--sage-dark); background: rgba(138, 158, 134, 0.1); padding: 8px 12px; border-radius: 8px; margin-top: 10px; font-style: italic; border-left: 3px solid var(--sage-primary); }
 
 .settings-form { background: rgba(255,255,255,0.5); padding: 16px; border-radius: 12px; border: 1px solid var(--sage-light); }
 .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
@@ -115,45 +115,28 @@ textarea:focus { border-color: var(--sage-primary); }
 .btn-del-cat { background: #ffecec; border: none; color: #d9534f; width: 28px; height: 28px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
 .btn-del-cat:hover { background: #d9534f; color: white; }
 
-
-/* --- PENGATURAN UI MOBILE DRAWER & LAYOUT --- */
+/* MOBILE RESPONSIVE UI */
 @media (max-width: 768px) {
   body { font-size: 12px; }
-  
-  /* Sidebar dibuat Fixed Drawer ala Android */
-  .sidebar { 
-    position: fixed; 
-    top: 0; left: 0; 
-    height: 100vh; 
-    z-index: 100; 
-    box-shadow: 4px 0 20px rgba(0,0,0,0.1);
-  }
-  
+  .sidebar { position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; box-shadow: 4px 0 20px rgba(0,0,0,0.1); }
   .sidebar.minimized .user-profile { display: none; }
-  
-  /* Area Konten bergeser ke kanan menyesuaikan sidebar yang minimize (72px) */
-  .content { 
-    margin-left: 72px; 
-    width: calc(100vw - 72px); 
-    padding: 16px; 
-  }
-  
+  .content { margin-left: 72px; width: calc(100vw - 72px); padding: 16px; }
   header { margin-bottom: 16px; }
   header h1 { font-size: 20px; margin-bottom: 2px; }
   header p { font-size: 11px; }
   
   .btn-primary, .btn-secondary { font-size: 11px; padding: 8px 14px; }
   
-  .task-card { padding: 12px; align-items: flex-start; gap: 8px; flex-direction: column; }
-  .task-info { width: 100%; align-items: flex-start; gap: 12px; }
-  .task-checkbox { width: 18px; height: 18px; margin-top: 2px; }
-  .task-details { width: 100%; }
-  .task-details h3 { font-size: 13px; line-height: 1.3; margin-bottom: 6px; }
-  .task-meta { gap: 6px; }
-  .task-meta span { font-size: 9px; padding: 3px 6px; }
-  .notes-display { font-size: 10px; padding: 6px 10px; margin-top: 8px; }
+  .task-card { padding: 12px; align-items: flex-start; flex-direction: column; }
+  .task-info { align-items: flex-start; gap: 10px; }
+  .task-details h3 { font-size: 14px; line-height: 1.3; }
   
-  .task-actions { width: 100%; justify-content: flex-end; margin-top: 4px; border-top: 1px dashed rgba(0,0,0,0.05); padding-top: 8px; }
+  .meta-schedule { font-size: 11px; }
+  .meta-badges span { font-size: 10px; padding: 3px 6px; }
+  .notes-display { font-size: 11px; padding: 8px 10px; margin-top: 8px; }
+  
+  .task-actions { width: 100%; justify-content: flex-end; margin-top: 8px; margin-left: 0; border-top: 1px dashed rgba(0,0,0,0.05); padding-top: 10px; }
+  .btn-edit-task, .btn-delete-task { width: 28px; height: 28px; }
 
   .modal-content { padding: 16px; max-width: 92%; max-height: 90vh; overflow-y: auto;}
   .modal-content h3 { font-size: 16px; margin-bottom: 12px; }
@@ -162,14 +145,4 @@ textarea:focus { border-color: var(--sage-primary); }
   .input-group input, .input-group select, textarea { font-size: 11px; padding: 8px; border-radius: 6px; }
   .checkbox-grid { grid-template-columns: 1fr; gap: 6px; margin-bottom: 12px;}
   .chk-label { font-size: 11px; }
-  .settings-list li { font-size: 11px; padding: 8px; }
 }
-
-/* --- Tambahan Tombol Edit Card --- */
-.btn-edit-task { background: transparent; border: 1px solid rgba(138, 158, 134, 0.4); color: var(--sage-dark); width: 28px; height: 28px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-.btn-edit-task:hover { background: var(--sage-light); color: var(--text-main); }
-.btn-delete-task { background: #ffecec; border: 1px solid #ffdcdc; color: #d9534f; width: 28px; height: 28px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-.btn-delete-task:hover { background: #d9534f; color: white; }
-
-/* Menyesuaikan jarak tombol agar rapi */
-.task-actions { gap: 6px; }
