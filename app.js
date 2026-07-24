@@ -35,7 +35,7 @@ const jadwalMapel = {
 };
 
 // --- ICON PICKER LOGIC ---
-const availableIcons = ['ph-folder', 'ph-book-open', 'ph-users', 'ph-briefcase', 'ph-graduation-cap', 'ph-code', 'ph-game-controller', 'ph-heart', 'ph-star', 'ph-cpu', 'ph-shopping-cart', 'ph-palette', 'ph-music-note', 'ph-camera', 'ph-calendar-check', 'ph-lightning'];
+const availableIcons = ['ph-folder', 'ph-book-open', 'ph-users', 'ph-briefcase', 'ph-graduation-cap', 'ph-code', 'ph-game-controller', 'ph-heart', 'ph-star', 'ph-cpu', 'ph-shopping-cart', 'ph-palette', 'ph-music-note', 'ph-camera', 'ph-calendar-check', 'ph-lightning', 'ph-push-pin'];
 
 function renderIconPicker(selected = 'ph-folder') {
   const picker = document.getElementById('icon-picker');
@@ -90,29 +90,35 @@ function getTomorrowDate() {
   return tmrw.toISOString().split('T')[0];
 }
 
-// --- SIDEBAR LOGIC (SUPER SMOOTH & BUG-FREE) ---
+// --- SIDEBAR LOGIC (SUPER SMOOTH & OVERLAY BLUR) ---
 if (window.innerWidth <= 768) {
   document.getElementById('sidebar').classList.add('minimized');
 }
 
-// Tombol Toggle Sidebar
+// Fungsi untuk membuka/menutup sidebar dan efek blur overlay
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  
+  sidebar.classList.toggle('minimized');
+  
+  // Tampilkan overlay blur jika sidebar terbuka (berlaku di semua ukuran jika mau, tp paling berguna di Mobile)
+  if (!sidebar.classList.contains('minimized')) {
+    overlay.classList.add('active');
+  } else {
+    overlay.classList.remove('active');
+  }
+}
+
 document.getElementById('btn-toggle-sidebar').addEventListener('click', (e) => { 
   e.stopPropagation(); 
-  document.getElementById('sidebar').classList.toggle('minimized'); 
+  toggleSidebar();
 });
 
-// Menutup sidebar saat klik di luar
-document.addEventListener('click', (e) => {
-  const sidebar = document.getElementById('sidebar');
-  const toggleBtn = document.getElementById('btn-toggle-sidebar');
-  
-  if (!sidebar.classList.contains('minimized')) {
-    if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
-      if (!e.target.closest('.modal')) {
-        sidebar.classList.add('minimized');
-      }
-    }
-  }
+// Menutup sidebar jika klik area luar (Overlay)
+document.getElementById('sidebar-overlay').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.add('minimized');
+  document.getElementById('sidebar-overlay').classList.remove('active');
 });
 
 // Event Delegation untuk Menu Sidebar
@@ -136,7 +142,10 @@ document.getElementById('sidebar-nav').addEventListener('click', (e) => {
   }
   
   renderTasksUI();
+  
+  // Otomatis tutup (minimize) ke Rail Drawer saat menu diklik
   document.getElementById('sidebar').classList.add('minimized');
+  document.getElementById('sidebar-overlay').classList.remove('active');
 });
 
 // --- KATEGORI & SETTINGS ---
@@ -235,6 +244,7 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('login-screen').classList.add('active');
   }
 });
+
 document.getElementById('btn-login').addEventListener('click', async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } catch (e) { document.getElementById('login-error').textContent = 'Gagal login.'; }});
 document.getElementById('btn-register').addEventListener('click', async () => { try { await createUserWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } catch (e) { document.getElementById('login-error').textContent = 'Gagal daftar.'; }});
 document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
@@ -257,6 +267,7 @@ document.getElementById('btn-save-cat').addEventListener('click', async () => {
     longDate: document.getElementById('chk-longdate').checked, timeRange: document.getElementById('chk-timerange').checked,
     deadline: document.getElementById('chk-deadline').checked, startTime: document.getElementById('chk-starttime').checked, finishFast: document.getElementById('chk-finishfast').checked
   };
+  
   if (editCatMode) {
     const idx = userCategories.findIndex(c => c.name === editCatMode); if(idx >= 0) userCategories[idx] = newCat;
     if (editCatMode !== name) {
@@ -283,17 +294,21 @@ document.getElementById('list-categories').addEventListener('click', async (e) =
       document.getElementById('chk-deadline').checked = cat.deadline; document.getElementById('chk-starttime').checked = cat.startTime;
       document.getElementById('chk-finishfast').checked = cat.finishFast;
       renderIconPicker(cat.icon || 'ph-folder');
+      
       editCatMode = cat.name; document.getElementById('btn-save-cat').textContent = "Update Kategori"; document.getElementById('btn-cancel-edit-cat').style.display = 'inline-block';
     }
   }
 });
-document.getElementById('btn-close-settings').addEventListener('click', () => document.getElementById('modal-settings').classList.remove('active'));
 
-// LOGIKA SILANG (X) UNTUK TUTUP MODAL
-document.getElementById('btn-cancel').addEventListener('click', () => { document.getElementById('modal').classList.remove('active'); editingTaskId = null; });
+// LOGIKA SILANG (X) UNTUK TUTUP SEMUA MODAL
+document.querySelectorAll('.btn-close-modal').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.target.closest('.modal').classList.remove('active');
+    editingTaskId = null;
+  });
+});
 
-
-// --- SIMPAN & UPDATE KEGIATAN ---
+// SIMPAN & UPDATE TUGAS
 document.getElementById('btn-add-task').addEventListener('click', () => {
   editingTaskId = null; document.getElementById('modal-form-title').textContent = "Buat Kegiatan Baru"; document.getElementById('btn-save').textContent = "Simpan Kegiatan";
   document.getElementById('input-title').value = ''; document.getElementById('input-notes').value = ''; 
@@ -318,7 +333,7 @@ document.getElementById('btn-save').addEventListener('click', async () => {
   let payload = { uid: currentUser.uid, title: title, category: catName, notes: notes, finishFast: cat.finishFast };
   
   if (!editingTaskId) {
-    payload.completed = false; payload.notified = false; payload.notified_hmin1 = false; payload.notified_hday = false; payload.createdAt = new Date();
+    payload.completed = false; payload.pinned = false; payload.notified = false; payload.notified_hmin1 = false; payload.notified_hday = false; payload.createdAt = new Date();
   }
 
   if(cat.subs.length) payload.subCategory = document.getElementById('input-sub-category').value;
@@ -380,9 +395,15 @@ function renderTasksUI() {
   const listEl = document.getElementById('task-list');
   listEl.innerHTML = '';
   
+  // LOGIKA PENGURUTAN BARU (Belum selesai di atas, Sematkan di paling atas, Selesai di bawah)
   let sortedTasks = [...allTasks].sort((a, b) => {
-    if (a.completed === b.completed) return b.createdAt.toMillis() - a.createdAt.toMillis();
-    return a.completed ? 1 : -1;
+    if (a.completed !== b.completed) return a.completed ? 1 : -1;
+    // Jika sama-sama belum selesai, utamakan yang disematkan (pinned = true)
+    if (!a.completed && !b.completed) {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+    }
+    // Jika statusnya sama, urutkan berdasarkan yang paling baru dibuat
+    return b.createdAt.toMillis() - a.createdAt.toMillis();
   });
 
   let filtered = sortedTasks;
@@ -409,9 +430,14 @@ function renderTasksUI() {
     let subDisp = task.subCategory ? `<span>🏷️ ${task.subCategory}</span>` : '';
     let notesDisp = task.notes ? `<div class="notes-display">${task.notes}</div>` : '';
     let btnFinishFast = (task.finishFast && !task.completed) ? `<button class="btn-finish"><i class="ph ph-check-circle"></i> Selesai</button>` : '';
+    
+    // TAMPILAN IKON PIN / SEMATKAN
+    let pinIcon = task.pinned ? 'ph-fill ph-push-pin' : 'ph ph-push-pin';
+    let pinClass = task.pinned ? 'active' : '';
+    let btnPinTask = !task.completed ? `<button class="btn-pin-task ${pinClass}"><i class="${pinIcon}"></i></button>` : '';
 
     const card = document.createElement('div');
-    card.className = `task-card glass-panel ${task.completed ? 'completed' : ''}`;
+    card.className = `task-card glass-panel ${task.completed ? 'completed' : ''} ${task.pinned && !task.completed ? 'is-pinned' : ''}`;
     card.innerHTML = `
       <div class="task-info">
         <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
@@ -426,18 +452,33 @@ function renderTasksUI() {
       </div>
       <div class="task-actions">
         ${btnFinishFast}
+        ${btnPinTask}
         <button class="btn-edit-task"><i class="ph ph-pencil"></i></button>
         <button class="btn-delete-task"><i class="ph ph-trash"></i></button>
       </div>
     `;
     
-    card.querySelector('.task-checkbox').addEventListener('change', async (e) => await updateDoc(doc(db, "tasks", task.id), { completed: e.target.checked }));
+    // LOGIKA AUTO-UNPIN SAAT DICEKLIS SELESAI
+    card.querySelector('.task-checkbox').addEventListener('change', async (e) => {
+      const isCompleted = e.target.checked;
+      let updateData = { completed: isCompleted };
+      if (isCompleted) updateData.pinned = false; // Menghilangkan sematan saat selesai
+      await updateDoc(doc(db, "tasks", task.id), updateData);
+    });
+    
     card.querySelector('.btn-delete-task').addEventListener('click', async () => { if(confirm(`Hapus?`)) await deleteDoc(doc(db, "tasks", task.id)); });
     
+    // LOGIKA TOMBOL PIN
+    if(!task.completed) {
+      card.querySelector('.btn-pin-task').addEventListener('click', async () => {
+        await updateDoc(doc(db, "tasks", task.id), { pinned: !task.pinned });
+      });
+    }
+
     card.querySelector('.btn-edit-task').addEventListener('click', () => {
       editingTaskId = task.id;
       document.getElementById('modal-form-title').textContent = "Edit Kegiatan";
-      document.getElementById('btn-save').textContent = "Update Kegiatan";
+      document.getElementById('btn-save').textContent = "Update";
       
       document.getElementById('input-title').value = task.title;
       document.getElementById('input-notes').value = task.notes || '';
@@ -464,7 +505,12 @@ function renderTasksUI() {
       document.getElementById('modal').classList.add('active');
     });
 
-    if(task.finishFast && !task.completed) card.querySelector('.btn-finish').addEventListener('click', async () => await updateDoc(doc(db, "tasks", task.id), { completed: true }));
+    if(task.finishFast && !task.completed) {
+      card.querySelector('.btn-finish').addEventListener('click', async () => {
+        // Tombol selesai cepat juga otomatis menghilangkan sematan
+        await updateDoc(doc(db, "tasks", task.id), { completed: true, pinned: false });
+      });
+    }
 
     listEl.appendChild(card);
   });
