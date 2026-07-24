@@ -10,7 +10,6 @@
 </head>
 <body>
 
-  <!-- Layar Login -->
   <div id="login-screen" class="screen active">
     <div class="login-card glass-panel">
       <h1>JadwalKu.</h1>
@@ -31,7 +30,6 @@
     </div>
   </div>
 
-  <!-- Layar Aplikasi -->
   <div id="app-screen" class="screen layout">
     <aside class="sidebar glass-panel" id="sidebar">
       <div class="sidebar-header">
@@ -72,7 +70,7 @@
       </div>
     </aside>
 
-    <main class="content">
+    <main class="content" id="main-content">
       <div class="content-wrapper">
         <header>
           <div>
@@ -155,7 +153,7 @@
 
   <!-- Modal Pengaturan Kategori -->
   <div id="modal-settings" class="modal">
-    <div class="modal-content glass-panel" style="max-height: 85vh; overflow-y: auto;">
+    <div class="modal-content glass-panel" style="max-height: 85vh; overflow-y: auto; max-width: 460px;">
       <h3>Pengaturan Kategori Custom</h3>
       
       <div class="settings-form">
@@ -166,6 +164,13 @@
         <div class="input-group">
           <label>Sub Kategori (Pisahkan dgn Koma)</label>
           <input type="text" id="set-sub-cat" placeholder="Misal: Desain, Coding">
+        </div>
+
+        <!-- PEMILIH IKON BARU -->
+        <div class="input-group">
+          <label>Pilih Ikon</label>
+          <div class="icon-grid" id="icon-picker"></div>
+          <input type="hidden" id="set-cat-icon" value="ph-folder">
         </div>
 
         <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; display: block;">Aktifkan Opsi Input:</label>
