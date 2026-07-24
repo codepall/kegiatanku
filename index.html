@@ -86,10 +86,10 @@
     </main>
   </div>
 
-  <!-- Modal Tambah Kegiatan -->
+  <!-- Modal Tambah / Edit Kegiatan -->
   <div id="modal" class="modal">
     <div class="modal-content glass-panel">
-      <h3>Buat Kegiatan Baru</h3>
+      <h3 id="modal-form-title">Buat Kegiatan Baru</h3>
       
       <div class="input-group">
         <label>Judul Kegiatan</label>
@@ -115,6 +115,16 @@
       <div class="form-row" id="field-long-date" style="display: none;">
         <div class="input-group w-50"><label>Tgl Mulai</label><input type="date" id="val-date-start"></div>
         <div class="input-group w-50"><label>Tgl Selesai</label><input type="date" id="val-date-end"></div>
+      </div>
+
+      <!-- Khusus Opsi Deadline PR -->
+      <div class="input-group" id="field-pr-deadline-type" style="display: none;">
+        <label>Waktu Tenggat (Deadline)</label>
+        <select id="val-pr-deadline-type">
+          <option value="khusus">Pilih Tanggal Khusus</option>
+          <option value="besok">Besok</option>
+          <option value="next_meeting">Pertemuan Selanjutnya</option>
+        </select>
       </div>
 
       <div class="input-group" id="field-deadline" style="display: none;">
