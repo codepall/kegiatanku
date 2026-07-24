@@ -2,10 +2,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- KUNCI API GEMINI KAMU ---
-const GEMINI_API_KEY = "AQ.Ab8RN6JIuHY71Jza2iq-pawNDWhZ_3yhBaEectuZkkrQvKHYGQ";
-
-// Kunci API Firebase (JANGAN DIUBAH)
 const firebaseConfig = {
   apiKey: "AIzaSyDPsRwRf72xaQkSdGn89WdwA3sbJI2Z-z0",
   authDomain: "kegiatanku-503210.firebaseapp.com",
@@ -19,6 +15,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Data Kategori & Jadwal Manual
 let userCategories = [
   { name: "PR", icon: "ph-book-open", subs: ["BIN", "BK", "BIG", "IPS", "PPKn", "Informatika", "IPA", "MAT", "BJ", "SB", "PAI", "PJOK"], longDate: false, timeRange: false, deadline: true, startTime: false, finishFast: false }
 ];
@@ -60,6 +57,7 @@ function formatDateIndo(dateStr) {
   return `${days[dateObj.getDay()]}, ${d} ${months[dateObj.getMonth()]} ${y}`;
 }
 
+// LOGIKA TEPAT WAKTU (Murni HARI H) MENGGUNAKAN LOKAL ZONA WAKTU
 function getNextMeetingDate(subCat) {
   const daysArr = userSchedule[subCat];
   if (!daysArr || daysArr.length === 0) return ""; 
@@ -71,7 +69,11 @@ function getNextMeetingDate(subCat) {
     if(daysArr.includes(checkDay)) {
       let nextDate = new Date(today);
       nextDate.setDate(today.getDate() + diff);
-      return nextDate.toISOString().split('T')[0]; 
+      // Mencegah error UTC yang bikin mundur 1 hari (H-1)
+      const y = nextDate.getFullYear();
+      const m = String(nextDate.getMonth() + 1).padStart(2, '0');
+      const d = String(nextDate.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
     }
     diff++;
   }
@@ -81,7 +83,10 @@ function getNextMeetingDate(subCat) {
 function getTomorrowDate() {
   const tmrw = new Date();
   tmrw.setDate(tmrw.getDate() + 1);
-  return tmrw.toISOString().split('T')[0];
+  const y = tmrw.getFullYear();
+  const m = String(tmrw.getMonth() + 1).padStart(2, '0');
+  const d = String(tmrw.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 // --- SIDEBAR & OVERLAY LOGIC ---
@@ -126,6 +131,8 @@ document.getElementById('sidebar-nav').addEventListener('click', (e) => {
   item.classList.add('active');
   
   currentFilter = { type: item.getAttribute('data-filter'), value: item.getAttribute('data-value') };
+  document.getElementById('search-date-input').value = ''; // Reset pencarian jika klik menu kiri
+  
   if (window.innerWidth > 768) { 
     document.getElementById('header-subtitle').textContent = `Menampilkan: ${item.querySelector('.sidebar-text').textContent}`; 
   }
@@ -134,6 +141,18 @@ document.getElementById('sidebar-nav').addEventListener('click', (e) => {
   document.getElementById('sidebar').classList.add('minimized');
   document.getElementById('sidebar-overlay').classList.remove('active');
 });
+
+// --- PENCARIAN BERDASARKAN TANGGAL ---
+document.getElementById('search-date-input').addEventListener('change', (e) => {
+  if (e.target.value) {
+    currentFilter = { type: 'date', value: e.target.value };
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    renderTasksUI();
+  } else {
+    document.getElementById('sidebar-nav').querySelector('[data-value="all"]').click();
+  }
+});
+
 
 // --- KATEGORI & SCHEDULE ---
 async function loadUserSettings() {
@@ -232,82 +251,6 @@ document.getElementById('btn-save-schedule').addEventListener('click', async () 
   btn.textContent = "Simpan Jadwal";
 });
 
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = error => reject(error);
-  });
-}
-
-// --- FUNGSI SCAN JADWAL GEMINI AI ---
-document.getElementById('btn-scan-ai').addEventListener('click', async () => {
-  const fileInput = document.getElementById('upload-schedule-img');
-  const statusText = document.getElementById('ai-status');
-  const btnScan = document.getElementById('btn-scan-ai');
-
-  if (fileInput.files.length === 0) {
-    statusText.textContent = "Pilih gambar jadwal terlebih dahulu!";
-    return;
-  }
-
-  const file = fileInput.files[0];
-  statusText.textContent = "AI sedang membaca jadwalmu... (Bisa memakan waktu 10-20 detik)";
-  statusText.style.color = "var(--text-muted)";
-  btnScan.disabled = true;
-  btnScan.innerHTML = `<i class="ph ph-spinner-gap"></i> Loading...`;
-
-  try {
-    const rawKey = GEMINI_API_KEY.trim();
-    const base64Image = await fileToBase64(file);
-    const promptText = `
-      Analisis gambar jadwal pelajaran ini. Ekstrak data mata pelajaran beserta harinya menjadi format JSON murni.
-      Kunci (key) adalah singkatan mata pelajaran, nilainya (value) adalah array hari (1=Senin, 2=Selasa, 3=Rabu, 4=Kamis, 5=Jumat, 6=Sabtu).
-      PENTING: Jawab HANYA dengan objek JSON. Jangan ada teks lain, jangan ada format markdown backticks.
-      Contoh: {"BIN": [1, 3], "MAT": [2, 6]}
-    `;
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${rawKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [ { text: promptText }, { inline_data: { mime_type: file.type, data: base64Image } } ] }]
-      })
-    });
-
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || "Akses ditolak oleh Google. Cek kembali API Key.");
-    }
-
-    const result = await response.json();
-    
-    if (result.candidates && result.candidates.length > 0) {
-      let aiResponseText = result.candidates[0].content.parts[0].text;
-      
-      const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error("AI membalas dengan format yang tidak bisa dibaca.");
-      
-      const parsedSchedule = JSON.parse(jsonMatch[0]);
-      userSchedule = { ...userSchedule, ...parsedSchedule };
-      
-      renderScheduleModal(); 
-      
-      statusText.textContent = "Berhasil! Jangan lupa klik 'Simpan Jadwal' di bawah.";
-      statusText.style.color = "var(--sage-primary)";
-    } else {
-      throw new Error("AI gagal mengenali tabel gambar.");
-    }
-  } catch (error) {
-    console.error("AI Scan Error:", error);
-    statusText.textContent = `Gagal: ${error.message}`;
-    statusText.style.color = "#d9534f";
-  } finally {
-    btnScan.disabled = false;
-    btnScan.innerHTML = `<i class="ph ph-magic-wand"></i> Scan AI`;
-  }
-});
 
 function updateFormInputs() {
   const cat = userCategories.find(c => c.name === document.getElementById('input-category').value);
@@ -420,6 +363,7 @@ document.getElementById('list-categories').addEventListener('click', async (e) =
   }
 });
 
+// LOGIKA SILANG (X) UNTUK TUTUP SEMUA MODAL
 document.querySelectorAll('.btn-close-modal').forEach(btn => {
   btn.addEventListener('click', (e) => {
     e.target.closest('.modal').classList.remove('active');
@@ -523,8 +467,51 @@ function renderTasksUI() {
   });
 
   let filtered = sortedTasks;
-  if (currentFilter.type === 'status') filtered = sortedTasks.filter(t => currentFilter.value === 'pending' ? !t.completed : (currentFilter.value === 'completed' ? t.completed : true));
-  else if (currentFilter.type === 'category') filtered = sortedTasks.filter(t => t.category === currentFilter.value);
+  const subtitle = document.getElementById('header-subtitle');
+
+  // LOGIKA PENCARIAN TANGGAL
+  if (currentFilter.type === 'date') {
+    const targetDate = currentFilter.value;
+    
+    // Fungsi bantuan mengecek apakah tugas berlangsung di tanggal tsb
+    const isOverlapping = (t, dateStr) => {
+      if(t.date === dateStr || t.dateDeadline === dateStr) return true;
+      if(t.dateStart && t.dateEnd) return (dateStr >= t.dateStart && dateStr <= t.dateEnd);
+      return false;
+    };
+
+    let exactMatches = sortedTasks.filter(t => isOverlapping(t, targetDate));
+
+    if (exactMatches.length > 0) {
+      filtered = exactMatches;
+      subtitle.textContent = `Menampilkan kegiatan tanggal ${formatDateIndo(targetDate)}`;
+    } else {
+      // Cari tanggal paling dekat SETELAH tanggal yang dicari
+      let futureTasks = sortedTasks.filter(t => {
+        let refDate = t.date || t.dateStart || t.dateDeadline;
+        return refDate && refDate > targetDate;
+      });
+
+      if (futureTasks.length > 0) {
+        futureTasks.sort((a, b) => {
+          let da = a.date || a.dateStart || a.dateDeadline;
+          let db = b.date || b.dateStart || b.dateDeadline;
+          return new Date(da) - new Date(db);
+        });
+        
+        let closestDate = futureTasks[0].date || futureTasks[0].dateStart || futureTasks[0].dateDeadline;
+        filtered = sortedTasks.filter(t => isOverlapping(t, closestDate));
+        subtitle.textContent = `Kosong. Menampilkan terdekat: ${formatDateIndo(closestDate)}`;
+      } else {
+        filtered = [];
+        subtitle.textContent = `Tidak ada kegiatan di tanggal tersebut atau setelahnya.`;
+      }
+    }
+  } else if (currentFilter.type === 'status') {
+    filtered = sortedTasks.filter(t => currentFilter.value === 'pending' ? !t.completed : (currentFilter.value === 'completed' ? t.completed : true));
+  } else if (currentFilter.type === 'category') {
+    filtered = sortedTasks.filter(t => t.category === currentFilter.value);
+  }
 
   if (!filtered.length) return listEl.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:13px; margin-top:20px;">Belum ada kegiatan.</p>`;
 
@@ -632,7 +619,12 @@ function startNotificationChecker() {
   setInterval(async () => {
     if (Notification.permission === "granted") {
       const now = new Date(); const currentH = now.getHours();
-      const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      
+      // Ambil tanggal mutlak waktu lokal!
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      const today = `${y}-${m}-${d}`;
       
       for (const t of allTasks) {
         if (t.completed) continue;
