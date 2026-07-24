@@ -9,6 +9,7 @@
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(255, 255, 255, 0.5);
   --shadow: 0 8px 32px rgba(107, 125, 104, 0.12);
+  /* Kurva Super Smooth ala Premium UI */
   --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -33,7 +34,7 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 .login-actions { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
 #login-error { color: #d9534f; font-size: 11px; margin-top: 10px; min-height: 16px; }
 
-/* EFEK BLUR OVERLAY SAAT SIDEBAR TERBUKA */
+/* OVERLAY BLUR */
 .sidebar-overlay { 
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
   background: rgba(45, 54, 42, 0.1); backdrop-filter: blur(4px); 
@@ -43,15 +44,11 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 
 .layout { height: 100vh; width: 100vw; display: flex; position: relative; }
 
-/* SIDEBAR RAIL NAVIGATION SUPER SMOOTH */
+/* SIDEBAR RAIL NAVIGATION */
 .sidebar { 
-  width: 250px; 
-  padding: 24px 12px; 
-  display: flex; flex-direction: column; flex-shrink: 0;
-  transition: width 0.6s var(--ease-smooth); 
-  border-right: 1px solid var(--glass-border); 
-  position: relative; z-index: 100; 
-  overflow: hidden; white-space: nowrap; 
+  width: 250px; padding: 24px 12px; display: flex; flex-direction: column; flex-shrink: 0;
+  transition: width 0.6s var(--ease-smooth); border-right: 1px solid var(--glass-border); 
+  position: relative; z-index: 100; overflow: hidden; white-space: nowrap; 
 }
 .sidebar.minimized { width: 72px; }
 
@@ -63,10 +60,8 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 .nav-links { list-style: none; flex-grow: 1; overflow-y: auto; overflow-x: hidden; width: 100%; }
 .nav-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; padding: 12px 12px 4px 16px; font-weight: 600; }
 .nav-item { 
-  display: flex; align-items: center; 
-  padding: 12px; border-radius: 12px; margin-bottom: 4px; 
-  color: var(--text-muted); cursor: pointer; 
-  transition: background-color 0.2s, color 0.2s; 
+  display: flex; align-items: center; padding: 12px; border-radius: 12px; margin-bottom: 4px; 
+  color: var(--text-muted); cursor: pointer; transition: background-color 0.2s, color 0.2s; 
   font-size: 13px; font-weight: 500; 
 }
 .nav-item i { font-size: 24px; min-width: 24px; height: 24px; text-align: center; color: var(--sage-dark); transition: color 0.2s; }
@@ -126,7 +121,7 @@ textarea:focus { border-color: var(--sage-primary); }
 .btn-delete-task { background: #ffecec; border-color: #ffdcdc; color: #d9534f; }
 .btn-delete-task:hover { background: #d9534f; color: white; }
 
-/* --- MODAL & HEADER SILANG --- */
+/* --- MODAL HEADER X --- */
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3); justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(6px); }
 .modal.active { display: flex; }
 .modal-content { padding: 24px; border-radius: 20px; width: 100%; max-width: 420px; }
@@ -162,7 +157,7 @@ textarea:focus { border-color: var(--sage-primary); }
 .btn-del-cat { background: #ffecec; color: #d9534f; }
 .btn-del-cat:hover { background: #d9534f; color: white; }
 
-/* --- MOBILE RESPONSIVE --- */
+/* MOBILE RESPONSIVE UI */
 @media (max-width: 768px) {
   body { font-size: 12px; }
   .sidebar { position: fixed; top: 0; left: 0; height: 100vh; box-shadow: 4px 0 20px rgba(0,0,0,0.15); }
