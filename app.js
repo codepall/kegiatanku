@@ -25,10 +25,9 @@ let currentUser = null;
 let allTasks = [];
 let currentFilter = { type: 'status', value: 'all' };
 let editCatMode = null;
-let editingTaskId = null; // Menyimpan ID kegiatan yang sedang diedit
+let editingTaskId = null; 
 
 // --- AUTO JADWAL KELAS 9H ---
-// Format: 0=Minggu, 1=Senin, 2=Selasa, 3=Rabu, 4=Kamis, 5=Jumat, 6=Sabtu
 const jadwalMapel = {
   "BIN": [1, 3, 4], "BK": [1], "BIG": [1, 5], "IPS": [1, 3],
   "PPKn": [2], "Informatika": [2], "IPA": [2, 5],
@@ -45,7 +44,6 @@ function formatDateIndo(dateStr) {
   return `${days[dateObj.getDay()]}, ${d} ${months[dateObj.getMonth()]} ${y}`;
 }
 
-// Menghitung "Pertemuan Selanjutnya"
 function getNextMeetingDate(mapel) {
   const daysArr = jadwalMapel[mapel];
   if (!daysArr) return ""; 
@@ -57,24 +55,20 @@ function getNextMeetingDate(mapel) {
     if(daysArr.includes(checkDay)) {
       let nextDate = new Date(today);
       nextDate.setDate(today.getDate() + diff);
-      return nextDate.toISOString().split('T')[0]; // Format YYYY-MM-DD
+      return nextDate.toISOString().split('T')[0]; 
     }
     diff++;
   }
   return "";
 }
 
-// Menghitung Besok
 function getTomorrowDate() {
   const tmrw = new Date();
   tmrw.setDate(tmrw.getDate() + 1);
   return tmrw.toISOString().split('T')[0];
 }
 
-// --- SETUP AWAL ---
-if (window.innerWidth <= 768) {
-  document.getElementById('sidebar').classList.add('minimized');
-}
+if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('minimized');
 
 async function loadUserSettings() {
   const docSnap = await getDoc(doc(db, "userSettings", currentUser.uid));
@@ -111,7 +105,6 @@ function applyCategoriesToUI() {
   `).join('');
 }
 
-// UI LOGIC UNTUK INPUT DINAMIS
 function updateFormInputs() {
   const cat = userCategories.find(c => c.name === document.getElementById('input-category').value);
   if(!cat) return;
@@ -125,11 +118,10 @@ function updateFormInputs() {
   document.getElementById('field-long-date').style.display = cat.longDate ? 'flex' : 'none';
   document.getElementById('field-time-range').style.display = cat.timeRange ? 'flex' : 'none';
   
-  // Khusus Opsi PR / Kategori Berdeadline
   if(cat.deadline) {
     if(cat.name === 'PR') {
       document.getElementById('field-pr-deadline-type').style.display = 'flex';
-      document.getElementById('val-pr-deadline-type').dispatchEvent(new Event('change')); // Trigger logic
+      document.getElementById('val-pr-deadline-type').dispatchEvent(new Event('change'));
     } else {
       document.getElementById('field-pr-deadline-type').style.display = 'none';
       document.getElementById('field-deadline').style.display = 'flex';
@@ -144,18 +136,11 @@ function updateFormInputs() {
 }
 
 document.getElementById('input-category').addEventListener('change', updateFormInputs);
-
-// Logika Tipe Deadline PR (Menyembunyikan input manual jika otomatis)
 document.getElementById('val-pr-deadline-type').addEventListener('change', (e) => {
-  if(e.target.value === 'khusus') {
-    document.getElementById('field-deadline').style.display = 'flex';
-  } else {
-    document.getElementById('field-deadline').style.display = 'none';
-  }
+  document.getElementById('field-deadline').style.display = (e.target.value === 'khusus') ? 'flex' : 'none';
 });
 
-
-// AUTH & UTILS AWAL
+// AUTH
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
@@ -180,8 +165,8 @@ document.getElementById('btn-login').addEventListener('click', async () => { try
 document.getElementById('btn-register').addEventListener('click', async () => { try { await createUserWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } catch (e) { document.getElementById('login-error').textContent = 'Gagal daftar.'; }});
 document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
-// SIDEBAR & PENGATURAN KATEGORI (Singkat)
-function resetCatForm() { /* Logic sama spt sblmnya */
+// PENGATURAN KATEGORI
+function resetCatForm() { 
   editCatMode = null; document.getElementById('set-cat-name').value = ''; document.getElementById('set-sub-cat').value = '';
   document.querySelectorAll('.chk-label input').forEach(chk => chk.checked = false);
   document.getElementById('btn-save-cat').textContent = "Simpan Kategori"; document.getElementById('btn-cancel-edit-cat').style.display = 'none';
@@ -210,7 +195,7 @@ document.getElementById('btn-save-cat').addEventListener('click', async () => {
 });
 document.getElementById('list-categories').addEventListener('click', async (e) => {
   const btnDel = e.target.closest('.btn-del-cat'); const btnEdit = e.target.closest('.btn-edit-cat');
-  if(btnDel && confirm("Hapus kategori ini? (Catatan: Kegiatan yg sudah ada di kategori ini tidak akan terhapus)")) {
+  if(btnDel && confirm("Hapus kategori ini?")) {
     userCategories = userCategories.filter(c => c.name !== btnDel.getAttribute('data-name')); await saveUserSettings();
   }
   if(btnEdit) {
@@ -242,10 +227,10 @@ function attachSidebarListeners() {
 document.getElementById('btn-toggle-sidebar').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('minimized'); });
 
 
-// --- LOGIKA SIMPAN & UPDATE (EDIT) ---
+// --- SIMPAN & UPDATE KEGIATAN ---
 document.getElementById('btn-cancel').addEventListener('click', () => {
   document.getElementById('modal').classList.remove('active');
-  editingTaskId = null; // Reset saat batal
+  editingTaskId = null;
 });
 
 document.getElementById('btn-add-task').addEventListener('click', () => {
@@ -253,7 +238,6 @@ document.getElementById('btn-add-task').addEventListener('click', () => {
   document.getElementById('modal-form-title').textContent = "Buat Kegiatan Baru";
   document.getElementById('btn-save').textContent = "Simpan";
   
-  // Kosongkan Form
   document.getElementById('input-title').value = '';
   document.getElementById('input-notes').value = ''; 
   document.getElementById('val-date-start').value = '';
@@ -285,12 +269,9 @@ document.getElementById('btn-save').addEventListener('click', async () => {
     notes: notes, finishFast: cat.finishFast
   };
   
-  // Jika ini Add Baru (bukan Edit), tambahkan status dan notifikasi
   if (!editingTaskId) {
-    payload.completed = false;
-    payload.notified = false;
-    payload.notified_hmin1 = false;
-    payload.notified_hday = false;
+    payload.completed = false; payload.notified = false;
+    payload.notified_hmin1 = false; payload.notified_hday = false;
     payload.createdAt = new Date();
   }
 
@@ -301,7 +282,6 @@ document.getElementById('btn-save').addEventListener('click', async () => {
     if(!payload.dateStart || !payload.dateEnd) return alert("Isi tanggal mulai & selesai!");
   }
   
-  // Logika Khusus Deadline PR 
   if(cat.deadline) {
     if(cat.name === 'PR') {
       const type = document.getElementById('val-pr-deadline-type').value;
@@ -332,25 +312,21 @@ document.getElementById('btn-save').addEventListener('click', async () => {
     payload.timeStart = document.getElementById('val-time-only').value;
   }
 
-  // Bersihkan properti undefined
   Object.keys(payload).forEach(k => (payload[k] === undefined || payload[k] === "") && delete payload[k]);
 
   try {
     btnSave.textContent = "Menyimpan...";
-    if (editingTaskId) {
-      await updateDoc(doc(db, "tasks", editingTaskId), payload);
-    } else {
-      await addDoc(collection(db, "tasks"), payload);
-    }
+    if (editingTaskId) await updateDoc(doc(db, "tasks", editingTaskId), payload);
+    else await addDoc(collection(db, "tasks"), payload);
     document.getElementById('modal').classList.remove('active');
-    editingTaskId = null; // Reset
+    editingTaskId = null;
   } catch (error) { 
     console.error(error); alert("Gagal menyimpan."); 
   } finally { btnSave.textContent = "Simpan"; }
 });
 
 
-// --- PENGAMBILAN & RENDER DATA ---
+// --- RENDER DATA KEGIATAN & TATA LETAK BARU ---
 function fetchTasksFromDB() {
   onSnapshot(query(collection(db, "tasks"), where("uid", "==", currentUser.uid)), (snapshot) => {
     allTasks = [];
@@ -363,11 +339,8 @@ function renderTasksUI() {
   const listEl = document.getElementById('task-list');
   listEl.innerHTML = '';
   
-  // PENGURUTAN: Belum Selesai (false) di atas, Selesai (true) di bawah. Kemudian urutkan berdasar createdAt
   let sortedTasks = [...allTasks].sort((a, b) => {
-    if (a.completed === b.completed) {
-      return b.createdAt.toMillis() - a.createdAt.toMillis();
-    }
+    if (a.completed === b.completed) return b.createdAt.toMillis() - a.createdAt.toMillis();
     return a.completed ? 1 : -1;
   });
 
@@ -378,16 +351,31 @@ function renderTasksUI() {
   if (!filtered.length) return listEl.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:13px; margin-top:20px;">Belum ada kegiatan.</p>`;
 
   filtered.forEach(task => {
-    let tDisp = '';
-    // IMPLEMENTASI FORMAT TANGGAL INDO
-    if(task.dateStart && task.dateEnd) tDisp += `📅 ${formatDateIndo(task.dateStart)} s/d ${formatDateIndo(task.dateEnd)} `;
-    else if(task.dateDeadline) tDisp += `📅 Deadline: ${formatDateIndo(task.dateDeadline)} `;
-    else if(task.date) tDisp += `📅 ${formatDateIndo(task.date)} `;
+    let dateHtml = '';
+    let timeHtml = '';
 
-    if(task.timeStart && task.timeEnd) tDisp += `| ⏰ ${task.timeStart} - ${task.timeEnd}`;
-    else if(task.timeStart) tDisp += `| ⏰ Jam: ${task.timeStart}`;
+    // LOGIKA PENYUSUNAN BARIS TANGGAL
+    if(task.dateStart && task.dateEnd) {
+      if (task.dateStart === task.dateEnd) {
+        // Jika hari sama, sebut sekali!
+        dateHtml = `<div class="meta-row"><i class="ph ph-calendar"></i> ${formatDateIndo(task.dateStart)}</div>`;
+      } else {
+        dateHtml = `<div class="meta-row"><i class="ph ph-calendar"></i> ${formatDateIndo(task.dateStart)} s/d ${formatDateIndo(task.dateEnd)}</div>`;
+      }
+    } else if(task.dateDeadline) {
+      dateHtml = `<div class="meta-row"><i class="ph ph-calendar"></i> Deadline: ${formatDateIndo(task.dateDeadline)}</div>`;
+    } else if(task.date) {
+      dateHtml = `<div class="meta-row"><i class="ph ph-calendar"></i> ${formatDateIndo(task.date)}</div>`;
+    }
 
-    let subDisp = task.subCategory ? `<span style="background:rgba(255,255,255,0.8); border:1px solid #ddd; padding:4px 8px; border-radius:6px; font-weight:600; color:var(--sage-dark)">🏷️ ${task.subCategory}</span>` : '';
+    // LOGIKA PENYUSUNAN BARIS WAKTU/JAM
+    if(task.timeStart && task.timeEnd) {
+      timeHtml = `<div class="meta-row"><i class="ph ph-clock"></i> ${task.timeStart} - ${task.timeEnd}</div>`;
+    } else if(task.timeStart) {
+      timeHtml = `<div class="meta-row"><i class="ph ph-clock"></i> Mulai Jam ${task.timeStart}</div>`;
+    }
+
+    let subDisp = task.subCategory ? `<span>🏷️ ${task.subCategory}</span>` : '';
     let notesDisp = task.notes ? `<div class="notes-display">${task.notes}</div>` : '';
     let btnFinishFast = (task.finishFast && !task.completed) ? `<button class="btn-finish"><i class="ph ph-check-circle"></i> Selesai</button>` : '';
 
@@ -398,11 +386,20 @@ function renderTasksUI() {
         <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
         <div class="task-details">
           <h3>${task.title}</h3>
+          
           <div class="task-meta">
-            <span>${tDisp}</span>
-            <span style="background:var(--sage-light); color:var(--sage-dark); font-weight:600; padding:4px 8px; border-radius:6px;">${task.category}</span>
-            ${subDisp}
+            <!-- Waktu & Tanggal punya baris sendiri (Vertikal) -->
+            <div class="meta-schedule">
+              ${dateHtml}
+              ${timeHtml}
+            </div>
+            <!-- Badge diletakkan berdampingan (Horizontal) -->
+            <div class="meta-badges">
+              <span class="badge-cat">${task.category}</span>
+              ${subDisp}
+            </div>
           </div>
+          
           ${notesDisp}
         </div>
       </div>
@@ -416,7 +413,7 @@ function renderTasksUI() {
     card.querySelector('.task-checkbox').addEventListener('change', async (e) => await updateDoc(doc(db, "tasks", task.id), { completed: e.target.checked }));
     card.querySelector('.btn-delete-task').addEventListener('click', async () => { if(confirm(`Hapus?`)) await deleteDoc(doc(db, "tasks", task.id)); });
     
-    // LOGIKA TOMBOL EDIT TUGAS
+    // FUNGSI LOAD DATA SAAT TOMBOL EDIT TUGAS DIKLIK
     card.querySelector('.btn-edit-task').addEventListener('click', () => {
       editingTaskId = task.id;
       document.getElementById('modal-form-title').textContent = "Edit Kegiatan";
@@ -425,7 +422,7 @@ function renderTasksUI() {
       document.getElementById('input-title').value = task.title;
       document.getElementById('input-notes').value = task.notes || '';
       document.getElementById('input-category').value = task.category;
-      updateFormInputs(); // Render ulang form sesuai kategori
+      updateFormInputs(); 
 
       setTimeout(() => {
         if(task.subCategory) document.getElementById('input-sub-category').value = task.subCategory;
@@ -453,7 +450,6 @@ function renderTasksUI() {
   });
 }
 
-// LOGIKA NOTIFIKASI
 function startNotificationChecker() {
   setInterval(async () => {
     if (Notification.permission === "granted") {
@@ -463,7 +459,6 @@ function startNotificationChecker() {
       
       for (const t of allTasks) {
         if (t.completed) continue;
-        
         if (t.dateDeadline) {
           const dDate = new Date(`${t.dateDeadline}T00:00:00`);
           const daysDiff = (dDate.getTime() - now.getTime()) / (1000 * 3600 * 24);
@@ -476,7 +471,6 @@ function startNotificationChecker() {
             await updateDoc(doc(db, "tasks", t.id), { notified_hday: true });
           }
         }
-        
         if (t.timeStart && !t.notified) {
           const eventDate = t.dateStart || t.date || t.dateDeadline; 
           if(eventDate) {
