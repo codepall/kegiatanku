@@ -6,17 +6,17 @@
   --text-main: #2d362a;
   --text-muted: #6e7a6b;
   --white: #ffffff;
-  --glass-bg: rgba(255, 255, 255, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.5);
   --shadow: 0 8px 32px rgba(107, 125, 104, 0.12);
-  /* Kurva Super Smooth (Eksklusif UI Premium) */
+  /* Kurva Super Smooth (Eksklusif UI Premium Android/iOS) */
   --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
 body { background-color: var(--bg-main); background-image: radial-gradient(circle at top right, #f8faf7, #eef1ec); color: var(--text-main); overflow: hidden; }
 
-.glass-panel { background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--glass-border); box-shadow: var(--shadow); }
+.glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: var(--shadow); }
 .screen { display: none; }
 .screen.active { display: flex; }
 
@@ -34,37 +34,38 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 .login-actions { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
 #login-error { color: #d9534f; font-size: 11px; margin-top: 10px; min-height: 16px; }
 
-/* --- SIDEBAR RAIL NAVIGATION SUPER SMOOTH --- */
-.layout { height: 100vh; width: 100vw; display: flex; }
+/* --- EFEK BLUR OVERLAY SAAT SIDEBAR TERBUKA --- */
+.sidebar-overlay { 
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+  background: rgba(45, 54, 42, 0.1); backdrop-filter: blur(4px); 
+  z-index: 90; opacity: 0; visibility: hidden; transition: opacity 0.5s var(--ease-smooth), visibility 0.5s var(--ease-smooth); 
+}
+.sidebar-overlay.active { opacity: 1; visibility: visible; }
 
+.layout { height: 100vh; width: 100vw; display: flex; position: relative; }
+
+/* --- SIDEBAR RAIL NAVIGATION SUPER SMOOTH & ANTI-PATAH --- */
 .sidebar { 
   width: 250px; 
-  padding: 24px 12px; 
-  display: flex; 
-  flex-direction: column; 
-  flex-shrink: 0;
+  padding: 24px 12px; /* Inner width konstan: padding kiri 12, padding kanan 12 */
+  display: flex; flex-direction: column; flex-shrink: 0;
   transition: width 0.6s var(--ease-smooth); 
   border-right: 1px solid var(--glass-border); 
-  position: relative; 
-  z-index: 100; 
-  overflow-x: hidden; 
+  position: relative; z-index: 100; 
+  overflow: hidden; /* Penting! Mencegah teks loncat saat sidebar mengecil */
   white-space: nowrap; 
 }
 
-/* FIX BUG: Menghilangkan teks logo agar tombol geser ke tengah */
-.sidebar.minimized { width: 72px; }
-.sidebar.minimized .logo-area { display: none; }
-.sidebar.minimized .sidebar-header { justify-content: center; padding: 0; }
-.sidebar.minimized .btn-icon { margin: 0 auto; }
+.sidebar.minimized { 
+  width: 72px; 
+  /* 72px width - 24px total padding = 48px inner width. Icon adalah 24px, sisa ruang kanan 24px diabaikan oleh overflow hidden. Ikon presisi di kiri! */
+}
 
-.sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 0 4px; transition: all 0.6s var(--ease-smooth); }
-.logo-area { display: flex; align-items: center; gap: 12px; }
-.icon-logo { font-size: 24px; min-width: 24px; text-align: center; color: var(--sage-primary); flex-shrink: 0;}
-.sidebar-header h2 { color: var(--sage-dark); font-size: 18px; }
-
-.btn-icon { background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; }
-.btn-icon i { transition: transform 0.6s var(--ease-smooth); }
-.sidebar:not(.minimized) .btn-icon i { transform: rotate(180deg); color: var(--sage-primary); }
+/* Header & Tombol Animasi Mulus */
+.sidebar-header { display: flex; align-items: center; padding: 0 12px; margin-bottom: 24px; transition: padding 0.6s var(--ease-smooth); }
+.btn-icon { background: transparent; border: none; font-size: 24px; min-width: 24px; height: 24px; color: var(--sage-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.6s var(--ease-smooth); }
+.sidebar.minimized .btn-icon { transform: rotate(0deg); }
+.sidebar:not(.minimized) .btn-icon { transform: rotate(180deg); }
 
 .nav-links { list-style: none; flex-grow: 1; overflow-y: auto; overflow-x: hidden; width: 100%; }
 .nav-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; padding: 12px 12px 4px 16px; font-weight: 600; }
@@ -76,24 +77,21 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
   transition: background-color 0.2s, color 0.2s; 
   font-size: 13px; font-weight: 500; 
 }
-.nav-item i { font-size: 22px; min-width: 24px; text-align: center; flex-shrink: 0; transition: transform 0.6s var(--ease-smooth); }
-.sidebar:not(.minimized) .nav-item i { transform: translateX(4px); } 
-.sidebar.minimized .nav-item i { transform: translateX(0); }
-.nav-item.active, .nav-item:hover { background-color: rgba(197, 208, 194, 0.4); color: var(--sage-dark); }
+.nav-item i { font-size: 24px; min-width: 24px; height: 24px; text-align: center; color: var(--sage-dark); transition: color 0.2s; }
+.nav-item.active, .nav-item:hover { background-color: rgba(197, 208, 194, 0.5); color: var(--sage-dark); }
+.nav-item.active i { color: var(--sage-primary); }
 
-.sidebar-text { margin-left: 12px; transition: opacity 0.3s var(--ease-smooth); opacity: 1; }
+/* Teks Transisi Pudar */
+.sidebar-text { margin-left: 12px; font-weight: 600; opacity: 1; transition: opacity 0.3s var(--ease-smooth); }
 .sidebar.minimized .sidebar-text { opacity: 0; pointer-events: none; }
 
-.user-profile { display: flex; align-items: center; padding: 20px 4px 0 4px; border-top: 1px solid var(--glass-border); }
-.user-profile img { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
-.sidebar.minimized .user-info { display: none; }
-.sidebar.minimized .user-profile img { margin: 0 auto; }
-.user-info { display: flex; flex-direction: column; }
+.user-profile { display: flex; align-items: center; padding: 20px 10px 0 10px; border-top: 1px solid var(--glass-border); }
+.user-profile img { width: 28px; height: 28px; min-width: 28px; border-radius: 50%; } /* Ukuran disamakan dgn ikon 24-28px agar lurus vertikal */
+.user-info { display: flex; flex-direction: column; margin-left: 12px; }
 #btn-logout { background: none; border: none; color: #d9534f; cursor: pointer; text-align: left; font-size: 11px; font-weight: 500; padding: 0; }
 
-
-/* --- KONTEN UTAMA --- */
-.content { flex-grow: 1; padding: 32px; overflow-y: auto; display: flex; justify-content: center; transition: all 0.6s var(--ease-smooth); }
+/* KONTEN UTAMA */
+.content { flex-grow: 1; padding: 32px; overflow-y: auto; display: flex; justify-content: center; position: relative; z-index: 1; }
 .content-wrapper { width: 100%; max-width: 760px; }
 header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
 header h1 { font-size: 24px; color: var(--text-main); }
@@ -104,10 +102,13 @@ header p { color: var(--text-muted); font-size: 13px; }
 .btn-secondary { background-color: transparent; color: var(--text-muted); border: 1px solid var(--sage-dark); padding: 10px 20px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 500; }
 
 .task-container { display: flex; flex-direction: column; gap: 12px; }
-.task-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(8px); padding: 16px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.03); transition: transform 0.2s; border: 1px solid rgba(255,255,255,0.6); }
+.task-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(8px); padding: 16px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.03); transition: transform 0.2s; border: 1px solid rgba(255,255,255,0.6); position: relative; overflow: hidden;}
 .task-card:hover { transform: translateY(-2px); border-color: var(--sage-light); }
 .task-card.completed { opacity: 0.5; }
 .task-card.completed h3 { text-decoration: line-through; color: var(--text-muted); }
+/* Indikator visual samar jika dipin */
+.task-card.is-pinned::before { content: ''; position: absolute; left: 0; top: 0; width: 4px; height: 100%; background: var(--sage-primary); border-radius: 4px 0 0 4px;}
+
 .task-info { display: flex; gap: 16px; align-items: flex-start; width: 100%; }
 .task-checkbox { width: 20px; height: 20px; accent-color: var(--sage-primary); cursor: pointer; margin-top: 2px; }
 .task-details { display: flex; flex-direction: column; width: 100%; }
@@ -127,6 +128,12 @@ textarea:focus { border-color: var(--sage-primary); }
 .task-actions { display: flex; gap: 6px; align-items: center; margin-left: 12px; flex-shrink: 0; }
 .btn-finish { background: var(--sage-light); color: var(--sage-dark); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 4px; }
 .btn-finish:hover { background: var(--sage-primary); color: var(--white); }
+
+/* STYLE TOMBOL SEMATKAN (PIN) DLL */
+.btn-pin-task { background: transparent; border: 1px solid rgba(138, 158, 134, 0.4); color: var(--sage-dark); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+.btn-pin-task:hover { background: var(--sage-light); color: var(--text-main); }
+.btn-pin-task.active { background: rgba(138, 158, 134, 0.2); color: var(--sage-primary); border-color: var(--sage-primary); }
+
 .btn-edit-task { background: transparent; border: 1px solid rgba(138, 158, 134, 0.4); color: var(--sage-dark); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
 .btn-edit-task:hover { background: var(--sage-light); color: var(--text-main); }
 .btn-delete-task { background: #ffecec; border: 1px solid #ffdcdc; color: #d9534f; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
@@ -134,7 +141,7 @@ textarea:focus { border-color: var(--sage-primary); }
 
 
 /* --- MODAL & HEADER SILANG ELEGAN --- */
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.25); justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(6px); }
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3); justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(6px); }
 .modal.active { display: flex; }
 .modal-content { padding: 24px; border-radius: 20px; width: 100%; max-width: 420px; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--sage-light); padding-bottom: 12px; }
@@ -163,11 +170,12 @@ textarea:focus { border-color: var(--sage-primary); }
 .btn-del-cat { background: #ffecec; border: none; color: #d9534f; width: 28px; height: 28px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
 .btn-del-cat:hover { background: #d9534f; color: white; }
 
-/* --- MOBILE RESPONSIVE --- */
+/* --- MOBILE RESPONSIVE UI (DRAWER & OVERLAY) --- */
 @media (max-width: 768px) {
   body { font-size: 12px; }
   
-  .sidebar { position: fixed; top: 0; left: 0; height: 100vh; box-shadow: 4px 0 20px rgba(0,0,0,0.1); }
+  /* Sidebar Fixed Drawer Style */
+  .sidebar { position: fixed; top: 0; left: 0; height: 100vh; box-shadow: 4px 0 20px rgba(0,0,0,0.15); }
   
   .content { margin-left: 72px; width: calc(100vw - 72px); padding: 16px; }
   
@@ -186,7 +194,7 @@ textarea:focus { border-color: var(--sage-primary); }
   .notes-display { font-size: 11px; padding: 8px 10px; margin-top: 8px; }
   
   .task-actions { width: 100%; justify-content: flex-end; margin-top: 8px; margin-left: 0; border-top: 1px dashed rgba(0,0,0,0.05); padding-top: 10px; }
-  .btn-edit-task, .btn-delete-task { width: 28px; height: 28px; }
+  .btn-edit-task, .btn-delete-task, .btn-pin-task { width: 28px; height: 28px; }
 
   .modal-content { padding: 16px; max-width: 92%; max-height: 90vh; overflow-y: auto;}
   .input-group { margin-bottom: 8px; }
