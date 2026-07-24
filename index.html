@@ -10,6 +10,7 @@
 </head>
 <body>
 
+  <!-- Layar Login -->
   <div id="login-screen" class="screen active">
     <div class="login-card glass-panel">
       <h1>JadwalKu.</h1>
@@ -30,6 +31,7 @@
     </div>
   </div>
 
+  <!-- Layar Aplikasi -->
   <div id="app-screen" class="screen layout">
     <aside class="sidebar glass-panel" id="sidebar">
       <div class="sidebar-header">
@@ -70,12 +72,16 @@
       </div>
     </aside>
 
-    <main class="content" id="main-content">
+    <main class="content">
       <div class="content-wrapper">
         <header>
-          <div>
-            <h1 id="greeting">Halo!</h1>
-            <p id="header-subtitle">Berikut adalah jadwalmu hari ini.</p>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <!-- Tombol Burger Mobile -->
+            <div class="mobile-menu-btn" id="btn-mobile-menu"><i class="ph ph-list"></i></div>
+            <div>
+              <h1 id="greeting">Halo!</h1>
+              <p id="header-subtitle">Berikut adalah jadwalmu hari ini.</p>
+            </div>
           </div>
           <button id="btn-add-task" class="btn-primary">+ Kegiatan</button>
         </header>
@@ -166,7 +172,7 @@
           <input type="text" id="set-sub-cat" placeholder="Misal: Desain, Coding">
         </div>
 
-        <!-- PEMILIH IKON BARU -->
+        <!-- FITUR PEMILIH IKON -->
         <div class="input-group">
           <label>Pilih Ikon</label>
           <div class="icon-grid" id="icon-picker"></div>
