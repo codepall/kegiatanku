@@ -2,9 +2,10 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- KUNCI API GEMINI KAMU (PENGECEKAN KETAT DIHAPUS) ---
+// --- KUNCI API GEMINI KAMU ---
 const GEMINI_API_KEY = "AQ.Ab8RN6JIuHY71Jza2iq-pawNDWhZ_3yhBaEectuZkkrQvKHYGQ";
 
+// Kunci API Firebase (JANGAN DIUBAH)
 const firebaseConfig = {
   apiKey: "AIzaSyDPsRwRf72xaQkSdGn89WdwA3sbJI2Z-z0",
   authDomain: "kegiatanku-503210.firebaseapp.com",
@@ -231,7 +232,6 @@ document.getElementById('btn-save-schedule').addEventListener('click', async () 
   btn.textContent = "Simpan Jadwal";
 });
 
-// --- FUNGSI MENGUBAH GAMBAR KE BASE64 UNTUK AI ---
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -241,7 +241,7 @@ function fileToBase64(file) {
   });
 }
 
-// --- FUNGSI SCAN JADWAL DENGAN GEMINI AI (ANTI ERROR) ---
+// --- FUNGSI SCAN JADWAL GEMINI AI ---
 document.getElementById('btn-scan-ai').addEventListener('click', async () => {
   const fileInput = document.getElementById('upload-schedule-img');
   const statusText = document.getElementById('ai-status');
@@ -259,9 +259,7 @@ document.getElementById('btn-scan-ai').addEventListener('click', async () => {
   btnScan.innerHTML = `<i class="ph ph-spinner-gap"></i> Loading...`;
 
   try {
-    // Menghapus spasi yang tidak sengaja tersalin
     const rawKey = GEMINI_API_KEY.trim();
-
     const base64Image = await fileToBase64(file);
     const promptText = `
       Analisis gambar jadwal pelajaran ini. Ekstrak data mata pelajaran beserta harinya menjadi format JSON murni.
@@ -422,7 +420,6 @@ document.getElementById('list-categories').addEventListener('click', async (e) =
   }
 });
 
-// LOGIKA SILANG (X) UNTUK TUTUP SEMUA MODAL
 document.querySelectorAll('.btn-close-modal').forEach(btn => {
   btn.addEventListener('click', (e) => {
     e.target.closest('.modal').classList.remove('active');
