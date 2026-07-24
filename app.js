@@ -55,7 +55,7 @@ document.getElementById('icon-picker').addEventListener('click', (e) => {
   }
 });
 
-
+// --- DATE FORMATTER ---
 function formatDateIndo(dateStr) {
   if (!dateStr) return '';
   const [y, m, d] = dateStr.split('-');
@@ -89,21 +89,24 @@ function getTomorrowDate() {
   return tmrw.toISOString().split('T')[0];
 }
 
-// Setel Sidebar ke mode rapi (Minimize / Drawer) saat dibuka di HP
+// --- SIDEBAR LOGIC (SUPER SMOOTH & BUG-FREE) ---
 if (window.innerWidth <= 768) {
   document.getElementById('sidebar').classList.add('minimized');
 }
 
-// LOGIKA CERDAS: Tutup sidebar otomatis jika mengklik area luar
+// Tombol Toggle Sidebar
+document.getElementById('btn-toggle-sidebar').addEventListener('click', (e) => { 
+  e.stopPropagation(); // Cegah event klik luar agar tidak bentrok
+  document.getElementById('sidebar').classList.toggle('minimized'); 
+});
+
+// Menutup sidebar saat klik di luar
 document.addEventListener('click', (e) => {
   const sidebar = document.getElementById('sidebar');
   const toggleBtn = document.getElementById('btn-toggle-sidebar');
   
-  // Jika sidebar dalam keadaan terbuka di perangkat mobile
-  if (window.innerWidth <= 768 && !sidebar.classList.contains('minimized')) {
-    // Pastikan user tidak mengklik sidebar itu sendiri atau tombol bukanya
+  if (!sidebar.classList.contains('minimized')) {
     if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
-      // Abaikan jika user mengklik bagian dalam Form Modal
       if (!e.target.closest('.modal')) {
         sidebar.classList.add('minimized');
       }
@@ -111,6 +114,34 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// Event Delegation untuk Menu Sidebar (Rahasia Bebas Bug "Ilang-ilangan")
+document.getElementById('sidebar-nav').addEventListener('click', (e) => {
+  const item = e.target.closest('.nav-item');
+  if (!item) return;
+
+  if (item.id === 'btn-open-settings') {
+    resetCatForm(); 
+    document.getElementById('modal-settings').classList.add('active');
+    return;
+  }
+
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  item.classList.add('active');
+  
+  currentFilter = { type: item.getAttribute('data-filter'), value: item.getAttribute('data-value') };
+  
+  if (window.innerWidth > 768) { 
+    document.getElementById('header-subtitle').textContent = `Menampilkan: ${item.querySelector('.sidebar-text').textContent}`; 
+  }
+  
+  renderTasksUI();
+
+  // Otomatis minimize di layar apapun setelah klik menu (kalau mau layar besar tetap terbuka, tambahkan if)
+  document.getElementById('sidebar').classList.add('minimized');
+});
+
+
+// --- KATEGORI & SETTINGS ---
 async function loadUserSettings() {
   const docSnap = await getDoc(doc(db, "userSettings", currentUser.uid));
   if (docSnap.exists()) {
@@ -129,13 +160,14 @@ async function saveUserSettings() {
 function applyCategoriesToUI() {
   document.getElementById('input-category').innerHTML = userCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
   
+  // Render Kategori ke Sidebar
   document.getElementById('dynamic-categories-sidebar').innerHTML = userCategories.map(c => `
     <li class="nav-item" data-filter="category" data-value="${c.name}">
       <i class="ph ${c.icon}"></i> <span class="sidebar-text">${c.name}</span>
     </li>
   `).join('');
-  attachSidebarListeners();
 
+  // Render List Pengaturan
   document.getElementById('list-categories').innerHTML = userCategories.map(c => `
     <li>
       <div class="cat-info">
@@ -186,7 +218,6 @@ document.getElementById('val-pr-deadline-type').addEventListener('change', (e) =
   document.getElementById('field-deadline').style.display = (e.target.value === 'khusus') ? 'flex' : 'none';
 });
 
-
 // AUTH
 onAuthStateChanged(auth, async (user) => {
   if (user) {
@@ -213,7 +244,6 @@ document.getElementById('btn-login').addEventListener('click', async () => { try
 document.getElementById('btn-register').addEventListener('click', async () => { try { await createUserWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } catch (e) { document.getElementById('login-error').textContent = 'Gagal daftar.'; }});
 document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
-
 function resetCatForm() { 
   editCatMode = null; document.getElementById('set-cat-name').value = ''; document.getElementById('set-sub-cat').value = '';
   document.querySelectorAll('.chk-label input').forEach(chk => chk.checked = false);
@@ -222,6 +252,7 @@ function resetCatForm() {
 }
 
 document.getElementById('btn-cancel-edit-cat').addEventListener('click', resetCatForm);
+document.getElementById('btn-close-settings').addEventListener('click', () => document.getElementById('modal-settings').classList.remove('active'));
 
 document.getElementById('btn-save-cat').addEventListener('click', async () => {
   const name = document.getElementById('set-cat-name').value.trim();
@@ -268,48 +299,17 @@ document.getElementById('list-categories').addEventListener('click', async (e) =
   }
 });
 
-document.getElementById('btn-open-settings').addEventListener('click', () => { resetCatForm(); document.getElementById('modal-settings').classList.add('active'); });
-document.getElementById('btn-close-settings').addEventListener('click', () => document.getElementById('modal-settings').classList.remove('active'));
-
-function attachSidebarListeners() {
-  document.querySelectorAll('.nav-item').forEach(item => {
-    item.addEventListener('click', () => {
-      if (item.id === 'btn-open-settings') return;
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); item.classList.add('active');
-      currentFilter = { type: item.getAttribute('data-filter'), value: item.getAttribute('data-value') };
-      
-      if(window.innerWidth > 768) { document.getElementById('header-subtitle').textContent = `Menampilkan: ${item.querySelector('.sidebar-text').textContent}`; } 
-      
-      renderTasksUI();
-    });
-  });
-}
-
-document.getElementById('btn-toggle-sidebar').addEventListener('click', () => { 
-  document.getElementById('sidebar').classList.toggle('minimized'); 
-});
 
 // SIMPAN TUGAS
-document.getElementById('btn-cancel').addEventListener('click', () => {
-  document.getElementById('modal').classList.remove('active');
-  editingTaskId = null;
-});
-
+document.getElementById('btn-cancel').addEventListener('click', () => { document.getElementById('modal').classList.remove('active'); editingTaskId = null; });
 document.getElementById('btn-add-task').addEventListener('click', () => {
-  editingTaskId = null;
-  document.getElementById('modal-form-title').textContent = "Buat Kegiatan Baru";
-  document.getElementById('btn-save').textContent = "Simpan";
-  
+  editingTaskId = null; document.getElementById('modal-form-title').textContent = "Buat Kegiatan Baru"; document.getElementById('btn-save').textContent = "Simpan";
   document.getElementById('input-title').value = ''; document.getElementById('input-notes').value = ''; 
   document.getElementById('val-date-start').value = ''; document.getElementById('val-date-end').value = '';
   document.getElementById('val-date-deadline').value = ''; document.getElementById('val-default-date').value = '';
   document.getElementById('val-time-start').value = ''; document.getElementById('val-time-end').value = '';
   document.getElementById('val-time-only').value = '';
-
-  if(userCategories.length > 0) {
-    document.getElementById('input-category').value = userCategories[0].name;
-    updateFormInputs();
-  }
+  if(userCategories.length > 0) { document.getElementById('input-category').value = userCategories[0].name; updateFormInputs(); }
   document.getElementById('modal').classList.add('active');
 });
 
@@ -322,30 +322,24 @@ document.getElementById('btn-save').addEventListener('click', async () => {
 
   if (!title) return alert('Mohon isi Judul Kegiatan!');
 
-  let payload = {
-    uid: currentUser.uid, title: title, category: catName,
-    notes: notes, finishFast: cat.finishFast
-  };
+  let payload = { uid: currentUser.uid, title: title, category: catName, notes: notes, finishFast: cat.finishFast };
   
   if (!editingTaskId) {
-    payload.completed = false; payload.notified = false;
-    payload.notified_hmin1 = false; payload.notified_hday = false;
-    payload.createdAt = new Date();
+    payload.completed = false; payload.notified = false; payload.notified_hmin1 = false; payload.notified_hday = false; payload.createdAt = new Date();
   }
 
   if(cat.subs.length) payload.subCategory = document.getElementById('input-sub-category').value;
+  
   if(cat.longDate) {
-    payload.dateStart = document.getElementById('val-date-start').value;
-    payload.dateEnd = document.getElementById('val-date-end').value;
+    payload.dateStart = document.getElementById('val-date-start').value; payload.dateEnd = document.getElementById('val-date-end').value;
     if(!payload.dateStart || !payload.dateEnd) return alert("Isi tanggal mulai & selesai!");
   }
   
   if(cat.deadline) {
     if(cat.name === 'PR') {
       const type = document.getElementById('val-pr-deadline-type').value;
-      if (type === 'besok') {
-        payload.dateDeadline = getTomorrowDate();
-      } else if (type === 'next_meeting') {
+      if (type === 'besok') { payload.dateDeadline = getTomorrowDate(); } 
+      else if (type === 'next_meeting') {
         const nextDate = getNextMeetingDate(payload.subCategory);
         if(!nextDate) return alert("Maaf, Mapel ini tidak ditemukan di jadwal!");
         payload.dateDeadline = nextDate;
@@ -364,8 +358,7 @@ document.getElementById('btn-save').addEventListener('click', async () => {
     if(!payload.date) return alert("Isi tanggal kegiatan!");
   }
   if(cat.timeRange) {
-    payload.timeStart = document.getElementById('val-time-start').value;
-    payload.timeEnd = document.getElementById('val-time-end').value;
+    payload.timeStart = document.getElementById('val-time-start').value; payload.timeEnd = document.getElementById('val-time-end').value;
   } else if(cat.startTime) {
     payload.timeStart = document.getElementById('val-time-only').value;
   }
@@ -378,11 +371,8 @@ document.getElementById('btn-save').addEventListener('click', async () => {
     else await addDoc(collection(db, "tasks"), payload);
     document.getElementById('modal').classList.remove('active');
     editingTaskId = null;
-  } catch (error) { 
-    console.error(error); alert("Gagal menyimpan."); 
-  } finally { btnSave.textContent = "Simpan"; }
+  } catch (error) { console.error(error); alert("Gagal menyimpan."); } finally { btnSave.textContent = "Simpan"; }
 });
-
 
 function fetchTasksFromDB() {
   onSnapshot(query(collection(db, "tasks"), where("uid", "==", currentUser.uid)), (snapshot) => {
@@ -408,26 +398,16 @@ function renderTasksUI() {
   if (!filtered.length) return listEl.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:13px; margin-top:20px;">Belum ada kegiatan.</p>`;
 
   filtered.forEach(task => {
-    let dateHtml = '';
-    let timeHtml = '';
+    let dateHtml = ''; let timeHtml = '';
 
     if(task.dateStart && task.dateEnd) {
-      if (task.dateStart === task.dateEnd) {
-        dateHtml = `<div class="meta-row"><i class="ph ph-calendar"></i> ${formatDateIndo(task.dateStart)}</div>`;
-      } else {
-        dateHtml = `<div class="meta-row"><i class="ph ph-calendar"></i> ${formatDateIndo(task.dateStart)} s/d ${formatDateIndo(task.dateEnd)}</div>`;
-      }
-    } else if(task.dateDeadline) {
-      dateHtml = `<div class="meta-row"><i class="ph ph-calendar"></i> Deadline: ${formatDateIndo(task.dateDeadline)}</div>`;
-    } else if(task.date) {
-      dateHtml = `<div class="meta-row"><i class="ph ph-calendar"></i> ${formatDateIndo(task.date)}</div>`;
-    }
+      if (task.dateStart === task.dateEnd) { dateHtml = `<div class="meta-row"><i class="ph ph-calendar"></i> ${formatDateIndo(task.dateStart)}</div>`; } 
+      else { dateHtml = `<div class="meta-row"><i class="ph ph-calendar"></i> ${formatDateIndo(task.dateStart)} s/d ${formatDateIndo(task.dateEnd)}</div>`; }
+    } else if(task.dateDeadline) { dateHtml = `<div class="meta-row"><i class="ph ph-calendar"></i> Deadline: ${formatDateIndo(task.dateDeadline)}</div>`; } 
+      else if(task.date) { dateHtml = `<div class="meta-row"><i class="ph ph-calendar"></i> ${formatDateIndo(task.date)}</div>`; }
 
-    if(task.timeStart && task.timeEnd) {
-      timeHtml = `<div class="meta-row"><i class="ph ph-clock"></i> ${task.timeStart} - ${task.timeEnd}</div>`;
-    } else if(task.timeStart) {
-      timeHtml = `<div class="meta-row"><i class="ph ph-clock"></i> Mulai Jam ${task.timeStart}</div>`;
-    }
+    if(task.timeStart && task.timeEnd) { timeHtml = `<div class="meta-row"><i class="ph ph-clock"></i> ${task.timeStart} - ${task.timeEnd}</div>`; } 
+    else if(task.timeStart) { timeHtml = `<div class="meta-row"><i class="ph ph-clock"></i> Mulai Jam ${task.timeStart}</div>`; }
 
     const catObj = userCategories.find(c => c.name === task.category);
     const iconClass = catObj ? catObj.icon : 'ph-folder';
@@ -443,18 +423,10 @@ function renderTasksUI() {
         <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
         <div class="task-details">
           <h3>${task.title}</h3>
-          
           <div class="task-meta">
-            <div class="meta-schedule">
-              ${dateHtml}
-              ${timeHtml}
-            </div>
-            <div class="meta-badges">
-              <span class="badge-cat"><i class="ph ${iconClass}"></i> ${task.category}</span>
-              ${subDisp}
-            </div>
+            <div class="meta-schedule">${dateHtml}${timeHtml}</div>
+            <div class="meta-badges"><span class="badge-cat"><i class="ph ${iconClass}"></i> ${task.category}</span>${subDisp}</div>
           </div>
-          
           ${notesDisp}
         </div>
       </div>
@@ -507,8 +479,7 @@ function renderTasksUI() {
 function startNotificationChecker() {
   setInterval(async () => {
     if (Notification.permission === "granted") {
-      const now = new Date();
-      const currentH = now.getHours();
+      const now = new Date(); const currentH = now.getHours();
       const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
       
       for (const t of allTasks) {
