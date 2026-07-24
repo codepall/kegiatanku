@@ -9,6 +9,8 @@
   --glass-bg: rgba(255, 255, 255, 0.6);
   --glass-border: rgba(255, 255, 255, 0.4);
   --shadow: 0 8px 32px rgba(107, 125, 104, 0.12);
+  /* ANIMASI SMOOTH (APPLE / IOS EASE OUT EXPO) */
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
@@ -33,29 +35,40 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 #login-error { color: #d9534f; font-size: 11px; margin-top: 10px; min-height: 16px; }
 
 .layout { height: 100vh; width: 100vw; display: flex; }
-.sidebar { width: 240px; padding: 24px 16px; display: flex; flex-direction: column; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease; border-right: 1px solid var(--glass-border); position: relative; z-index: 10; }
+
+/* SIDEBAR DENGAN TRANSISI SUPER SMOOTH */
+.sidebar { 
+  width: 240px; padding: 24px 16px; display: flex; flex-direction: column; 
+  transition: width 0.6s var(--ease-smooth), transform 0.6s var(--ease-smooth), padding 0.6s var(--ease-smooth); 
+  border-right: 1px solid var(--glass-border); position: relative; z-index: 10; 
+  overflow-x: hidden; /* Mencegah teks lompat saat animasi mengecil */
+}
 .sidebar.minimized { width: 72px; padding: 24px 8px; align-items: center; }
-.sidebar.minimized .sidebar-text { display: none; }
 .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; width: 100%; }
-.logo-area { display: flex; align-items: center; gap: 8px; }
-.icon-logo { font-size: 24px; color: var(--sage-primary); }
-.sidebar-header h2 { color: var(--sage-dark); font-size: 18px; }
+.logo-area { display: flex; align-items: center; gap: 8px; min-width: 200px; }
+.icon-logo { font-size: 24px; color: var(--sage-primary); flex-shrink: 0;}
+.sidebar-header h2 { color: var(--sage-dark); font-size: 18px; white-space: nowrap;}
 
-/* ANIMASI IKON SIDEBAR */
-.btn-icon { background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; }
-.btn-icon i { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s; }
-.sidebar:not(.minimized) .btn-icon i { transform: rotate(90deg) scale(0.95); color: var(--sage-primary); }
+/* ANIMASI IKON ROTASI HALUS */
+.btn-icon { background: transparent; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; transition: transform 0.6s var(--ease-smooth); }
+.sidebar.minimized .btn-icon { transform: rotate(0deg); }
+.sidebar:not(.minimized) .btn-icon { transform: rotate(180deg); }
 
-.nav-links { list-style: none; flex-grow: 1; overflow-y: auto; width: 100%; }
-.nav-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; padding: 12px 12px 4px 12px; font-weight: 600; }
-.nav-item { padding: 10px 12px; border-radius: 10px; margin-bottom: 4px; color: var(--text-muted); cursor: pointer; transition: all 0.2s; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 12px; white-space: nowrap; overflow: hidden; }
-.nav-item i { font-size: 18px; min-width: 18px; }
+/* ANIMASI TEKS FADE (Lebih halus dari display: none) */
+.sidebar-text { transition: opacity 0.3s var(--ease-smooth); opacity: 1; white-space: nowrap;}
+.sidebar.minimized .sidebar-text { opacity: 0; pointer-events: none; }
+
+.nav-links { list-style: none; flex-grow: 1; overflow-y: auto; overflow-x: hidden; width: 100%; }
+.nav-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; padding: 12px 12px 4px 12px; font-weight: 600; white-space: nowrap; }
+.nav-item { padding: 10px 12px; border-radius: 10px; margin-bottom: 4px; color: var(--text-muted); cursor: pointer; transition: background-color 0.2s, color 0.2s; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+.nav-item i { font-size: 18px; min-width: 18px; text-align: center; }
+.sidebar.minimized .nav-item { justify-content: center; padding: 10px 0; }
 .nav-item.active, .nav-item:hover { background-color: rgba(197, 208, 194, 0.4); color: var(--sage-dark); }
 
-.user-profile { display: flex; align-items: center; gap: 10px; padding-top: 20px; border-top: 1px solid var(--glass-border); width: 100%; overflow: hidden; }
+.user-profile { display: flex; align-items: center; gap: 10px; padding-top: 20px; border-top: 1px solid var(--glass-border); width: 100%; white-space: nowrap; }
 .user-profile img { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
 .user-info { display: flex; flex-direction: column; }
-.user-info span { font-weight: 600; font-size: 13px; }
+.sidebar.minimized .user-profile img { margin: 0 auto; }
 #btn-logout { background: none; border: none; color: #d9534f; cursor: pointer; text-align: left; font-size: 11px; font-weight: 500; padding: 0; }
 
 .content { flex-grow: 1; padding: 32px; overflow-y: auto; display: flex; justify-content: center; }
@@ -63,6 +76,8 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
 header h1 { font-size: 24px; color: var(--text-main); }
 header p { color: var(--text-muted); font-size: 13px; }
+
+.mobile-menu-btn { display: none; }
 
 .btn-primary { background-color: var(--sage-primary); color: var(--white); border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background 0.2s; }
 .btn-primary:hover { background-color: var(--sage-dark); }
@@ -123,20 +138,27 @@ textarea:focus { border-color: var(--sage-primary); }
 .btn-del-cat { background: #ffecec; border: none; color: #d9534f; width: 28px; height: 28px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
 .btn-del-cat:hover { background: #d9534f; color: white; }
 
-/* MOBILE RESPONSIVE UI */
+/* MOBILE RESPONSIVE UI DENGAN TRANSISI HALUS */
 @media (max-width: 768px) {
   body { font-size: 12px; }
-  .sidebar { position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; box-shadow: 4px 0 20px rgba(0,0,0,0.1); }
-  .sidebar.minimized { transform: translateX(-100%); width: 240px; padding: 24px 16px; } /* Drawer style minimize */
-  .sidebar.minimized .user-profile, .sidebar.minimized .sidebar-text { display: flex; } /* Teks tetap ada kalau di HP, cuma digeser keluar */
+  .sidebar { 
+    position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; box-shadow: 4px 0 20px rgba(0,0,0,0.1); 
+    transform: translateX(0); /* Posisi normal saat drawer terbuka */
+  }
+  .sidebar.minimized { 
+    transform: translateX(-100%); /* Geser ke kiri hingga hilang (sangat smooth) */
+    width: 240px; padding: 24px 16px; 
+  }
+  .sidebar.minimized .user-profile, .sidebar.minimized .sidebar-text { display: flex; opacity: 1; }
+  .sidebar.minimized .nav-item { justify-content: flex-start; padding: 10px 12px; }
   
   .content { margin-left: 0; width: 100vw; padding: 16px; }
-  header { margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+  header { margin-bottom: 16px; display: flex; align-items: center; gap: 12px;}
   header h1 { font-size: 20px; margin-bottom: 2px; }
   header p { font-size: 11px; }
   
-  /* Tombol burger khusus mobile di luar sidebar */
-  .mobile-menu-btn { display: flex; background: var(--white); padding: 8px; border-radius: 8px; box-shadow: var(--shadow); color: var(--sage-primary); font-size: 20px; cursor: pointer; border: 1px solid var(--sage-light); margin-right: 12px;}
+  .mobile-menu-btn { display: flex; background: var(--white); padding: 8px; border-radius: 8px; box-shadow: var(--shadow); color: var(--sage-primary); font-size: 20px; cursor: pointer; border: 1px solid var(--sage-light); align-items: center; justify-content: center; transition: transform 0.2s; }
+  .mobile-menu-btn:active { transform: scale(0.9); }
   
   .btn-primary, .btn-secondary { font-size: 11px; padding: 8px 14px; }
   
@@ -159,6 +181,3 @@ textarea:focus { border-color: var(--sage-primary); }
   .checkbox-grid { grid-template-columns: 1fr; gap: 6px; margin-bottom: 12px;}
   .chk-label { font-size: 11px; }
 }
-
-/* Sembunyikan tombol burger mobile di desktop */
-@media (min-width: 769px) { .mobile-menu-btn { display: none; } }
