@@ -15,7 +15,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Data Kategori Default & Ikonnya
 let userCategories = [
   { name: "PR", icon: "ph-book-open", subs: ["BIN", "BK", "BIG", "IPS", "PPKn", "Informatika", "IPA", "MAT", "BJ", "SB", "PAI", "PJOK"], longDate: false, timeRange: false, deadline: true, startTime: false, finishFast: false },
   { name: "Organisasi", icon: "ph-users", subs: ["PMR", "OSIS", "Kader Bank Sampah", "Kader Keamanan Pangan"], longDate: true, timeRange: false, deadline: false, startTime: true, finishFast: false },
@@ -34,7 +33,7 @@ const jadwalMapel = {
   "MAT": [3, 6], "BJ": [3], "SB": [4], "PAI": [4], "PJOK": [6]
 };
 
-// --- LOGIKA PEMILIH IKON ---
+// --- ICON PICKER LOGIC ---
 const availableIcons = ['ph-folder', 'ph-book-open', 'ph-users', 'ph-briefcase', 'ph-graduation-cap', 'ph-code', 'ph-game-controller', 'ph-heart', 'ph-star', 'ph-cpu', 'ph-shopping-cart', 'ph-palette', 'ph-music-note', 'ph-camera', 'ph-calendar-check', 'ph-lightning'];
 
 function renderIconPicker(selected = 'ph-folder') {
@@ -57,7 +56,6 @@ document.getElementById('icon-picker').addEventListener('click', (e) => {
 });
 
 
-// --- FUNGSI FORMAT TANGGAL ---
 function formatDateIndo(dateStr) {
   if (!dateStr) return '';
   const [y, m, d] = dateStr.split('-');
@@ -91,25 +89,21 @@ function getTomorrowDate() {
   return tmrw.toISOString().split('T')[0];
 }
 
-// SETUP SIDEBAR MOBILE (Membuka Menu & Tutup jika klik luar area)
+// Setel Sidebar ke mode rapi (Minimize / Drawer) saat dibuka di HP
 if (window.innerWidth <= 768) {
   document.getElementById('sidebar').classList.add('minimized');
 }
 
-document.getElementById('btn-mobile-menu')?.addEventListener('click', () => {
-  document.getElementById('sidebar').classList.remove('minimized');
-});
-
-// LOGIKA CERDAS: TUTUP SIDEBAR JIKA KLIK DI LUAR (Click-outside to close)
+// LOGIKA CERDAS: Tutup sidebar otomatis jika mengklik area luar
 document.addEventListener('click', (e) => {
   const sidebar = document.getElementById('sidebar');
   const toggleBtn = document.getElementById('btn-toggle-sidebar');
-  const mobileBtn = document.getElementById('btn-mobile-menu');
   
-  if (!sidebar.classList.contains('minimized')) {
-    // Jika klik terjadi di luar elemen sidebar dan tombol pemanggilnya
-    if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target) && (!mobileBtn || !mobileBtn.contains(e.target))) {
-      // Abaikan jika user sedang mengeklik form modal di tengah layar
+  // Jika sidebar dalam keadaan terbuka di perangkat mobile
+  if (window.innerWidth <= 768 && !sidebar.classList.contains('minimized')) {
+    // Pastikan user tidak mengklik sidebar itu sendiri atau tombol bukanya
+    if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+      // Abaikan jika user mengklik bagian dalam Form Modal
       if (!e.target.closest('.modal')) {
         sidebar.classList.add('minimized');
       }
@@ -120,7 +114,6 @@ document.addEventListener('click', (e) => {
 async function loadUserSettings() {
   const docSnap = await getDoc(doc(db, "userSettings", currentUser.uid));
   if (docSnap.exists()) {
-    // Memberikan fallback 'ph-folder' jika data lama tidak punya ikon
     userCategories = docSnap.data().categories.map(c => ({...c, icon: c.icon || 'ph-folder'}));
   } else {
     await setDoc(doc(db, "userSettings", currentUser.uid), { categories: userCategories });
@@ -193,6 +186,7 @@ document.getElementById('val-pr-deadline-type').addEventListener('change', (e) =
   document.getElementById('field-deadline').style.display = (e.target.value === 'khusus') ? 'flex' : 'none';
 });
 
+
 // AUTH
 onAuthStateChanged(auth, async (user) => {
   if (user) {
@@ -214,12 +208,12 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('login-screen').classList.add('active');
   }
 });
+
 document.getElementById('btn-login').addEventListener('click', async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } catch (e) { document.getElementById('login-error').textContent = 'Gagal login.'; }});
 document.getElementById('btn-register').addEventListener('click', async () => { try { await createUserWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } catch (e) { document.getElementById('login-error').textContent = 'Gagal daftar.'; }});
 document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
 
-// --- FUNGSI PENGATURAN KATEGORI ---
 function resetCatForm() { 
   editCatMode = null; document.getElementById('set-cat-name').value = ''; document.getElementById('set-sub-cat').value = '';
   document.querySelectorAll('.chk-label input').forEach(chk => chk.checked = false);
@@ -273,6 +267,7 @@ document.getElementById('list-categories').addEventListener('click', async (e) =
     }
   }
 });
+
 document.getElementById('btn-open-settings').addEventListener('click', () => { resetCatForm(); document.getElementById('modal-settings').classList.add('active'); });
 document.getElementById('btn-close-settings').addEventListener('click', () => document.getElementById('modal-settings').classList.remove('active'));
 
@@ -284,7 +279,6 @@ function attachSidebarListeners() {
       currentFilter = { type: item.getAttribute('data-filter'), value: item.getAttribute('data-value') };
       
       if(window.innerWidth > 768) { document.getElementById('header-subtitle').textContent = `Menampilkan: ${item.querySelector('.sidebar-text').textContent}`; } 
-      else { document.getElementById('sidebar').classList.add('minimized'); } // Tutup otomatis di mobile saat menu ditekan
       
       renderTasksUI();
     });
@@ -295,7 +289,7 @@ document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
   document.getElementById('sidebar').classList.toggle('minimized'); 
 });
 
-// SIMPAN & UPDATE TUGAS
+// SIMPAN TUGAS
 document.getElementById('btn-cancel').addEventListener('click', () => {
   document.getElementById('modal').classList.remove('active');
   editingTaskId = null;
@@ -306,14 +300,10 @@ document.getElementById('btn-add-task').addEventListener('click', () => {
   document.getElementById('modal-form-title').textContent = "Buat Kegiatan Baru";
   document.getElementById('btn-save').textContent = "Simpan";
   
-  document.getElementById('input-title').value = '';
-  document.getElementById('input-notes').value = ''; 
-  document.getElementById('val-date-start').value = '';
-  document.getElementById('val-date-end').value = '';
-  document.getElementById('val-date-deadline').value = '';
-  document.getElementById('val-default-date').value = '';
-  document.getElementById('val-time-start').value = '';
-  document.getElementById('val-time-end').value = '';
+  document.getElementById('input-title').value = ''; document.getElementById('input-notes').value = ''; 
+  document.getElementById('val-date-start').value = ''; document.getElementById('val-date-end').value = '';
+  document.getElementById('val-date-deadline').value = ''; document.getElementById('val-default-date').value = '';
+  document.getElementById('val-time-start').value = ''; document.getElementById('val-time-end').value = '';
   document.getElementById('val-time-only').value = '';
 
   if(userCategories.length > 0) {
