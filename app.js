@@ -15,10 +15,11 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Data Kategori Default (Sekarang dilengkapi ikon default)
 let userCategories = [
-  { name: "PR", subs: ["BIN", "BK", "BIG", "IPS", "PPKn", "Informatika", "IPA", "MAT", "BJ", "SB", "PAI", "PJOK"], longDate: false, timeRange: false, deadline: true, startTime: false, finishFast: false },
-  { name: "Organisasi", subs: ["PMR", "OSIS", "Kader Bank Sampah", "Kader Keamanan Pangan"], longDate: true, timeRange: false, deadline: false, startTime: true, finishFast: false },
-  { name: "Umum", subs: [], longDate: false, timeRange: true, deadline: false, startTime: false, finishFast: true }
+  { name: "PR", icon: "ph-book-open", subs: ["BIN", "BK", "BIG", "IPS", "PPKn", "Informatika", "IPA", "MAT", "BJ", "SB", "PAI", "PJOK"], longDate: false, timeRange: false, deadline: true, startTime: false, finishFast: false },
+  { name: "Organisasi", icon: "ph-users", subs: ["PMR", "OSIS", "Kader Bank Sampah", "Kader Keamanan Pangan"], longDate: true, timeRange: false, deadline: false, startTime: true, finishFast: false },
+  { name: "Umum", icon: "ph-folder", subs: [], longDate: false, timeRange: true, deadline: false, startTime: false, finishFast: true }
 ];
 
 let currentUser = null;
@@ -27,14 +28,36 @@ let currentFilter = { type: 'status', value: 'all' };
 let editCatMode = null;
 let editingTaskId = null; 
 
-// --- AUTO JADWAL KELAS 9H ---
 const jadwalMapel = {
   "BIN": [1, 3, 4], "BK": [1], "BIG": [1, 5], "IPS": [1, 3],
   "PPKn": [2], "Informatika": [2], "IPA": [2, 5],
   "MAT": [3, 6], "BJ": [3], "SB": [4], "PAI": [4], "PJOK": [6]
 };
 
-// --- FUNGSI FORMAT TANGGAL INDO ---
+// Koleksi Ikon untuk Icon Picker
+const availableIcons = ['ph-folder', 'ph-book-open', 'ph-users', 'ph-briefcase', 'ph-graduation-cap', 'ph-code', 'ph-game-controller', 'ph-heart', 'ph-star', 'ph-cpu', 'ph-shopping-cart', 'ph-palette', 'ph-music-note', 'ph-camera'];
+
+// --- RENDER ICON PICKER ---
+function renderIconPicker(selected = 'ph-folder') {
+  const picker = document.getElementById('icon-picker');
+  picker.innerHTML = availableIcons.map(icon => `
+    <div class="icon-option ${icon === selected ? 'selected' : ''}" data-icon="${icon}">
+      <i class="ph ${icon}"></i>
+    </div>
+  `).join('');
+  document.getElementById('set-cat-icon').value = selected;
+}
+
+document.getElementById('icon-picker').addEventListener('click', (e) => {
+  const opt = e.target.closest('.icon-option');
+  if(opt) {
+    document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
+    opt.classList.add('selected');
+    document.getElementById('set-cat-icon').value = opt.getAttribute('data-icon');
+  }
+});
+
+
 function formatDateIndo(dateStr) {
   if (!dateStr) return '';
   const [y, m, d] = dateStr.split('-');
@@ -68,12 +91,47 @@ function getTomorrowDate() {
   return tmrw.toISOString().split('T')[0];
 }
 
-if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('minimized');
+// SETUP SIDEBAR MOBILE
+if (window.innerWidth <= 768) {
+  document.getElementById('sidebar').classList.add('minimized');
+  // Tambahkan tombol burger di header khusus mobile
+  const header = document.querySelector('header');
+  const btnMenu = document.createElement('div');
+  btnMenu.className = 'mobile-menu-btn';
+  btnMenu.innerHTML = '<i class="ph ph-list"></i>';
+  header.prepend(btnMenu);
+  
+  btnMenu.addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('minimized');
+  });
+}
+
+// LOGIKA KLIK LUAR SIDEBAR (Agar otomatis tutup)
+document.addEventListener('click', (e) => {
+  const sidebar = document.getElementById('sidebar');
+  const toggleBtn = document.getElementById('btn-toggle-sidebar');
+  const mobileBtn = document.querySelector('.mobile-menu-btn');
+  
+  // Hanya berlaku jika sidebar terbuka
+  if (!sidebar.classList.contains('minimized')) {
+    // Pastikan yg diklik bukan sidebar itu sendiri dan bukan tombol togglenya
+    if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target) && (!mobileBtn || !mobileBtn.contains(e.target))) {
+      // Abaikan jika klik terjadi di dalam modal
+      if (!e.target.closest('.modal')) {
+        sidebar.classList.add('minimized');
+      }
+    }
+  }
+});
+
 
 async function loadUserSettings() {
   const docSnap = await getDoc(doc(db, "userSettings", currentUser.uid));
-  if (docSnap.exists()) userCategories = docSnap.data().categories;
-  else await setDoc(doc(db, "userSettings", currentUser.uid), { categories: userCategories });
+  if (docSnap.exists()) {
+    userCategories = docSnap.data().categories.map(c => ({...c, icon: c.icon || 'ph-folder'})); // Fallback icon jika data lama tidak ada
+  } else {
+    await setDoc(doc(db, "userSettings", currentUser.uid), { categories: userCategories });
+  }
   applyCategoriesToUI();
 }
 async function saveUserSettings() {
@@ -83,9 +141,10 @@ async function saveUserSettings() {
 
 function applyCategoriesToUI() {
   document.getElementById('input-category').innerHTML = userCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+  
   document.getElementById('dynamic-categories-sidebar').innerHTML = userCategories.map(c => `
     <li class="nav-item" data-filter="category" data-value="${c.name}">
-      <i class="ph ph-folder"></i> <span class="sidebar-text">${c.name}</span>
+      <i class="ph ${c.icon}"></i> <span class="sidebar-text">${c.name}</span>
     </li>
   `).join('');
   attachSidebarListeners();
@@ -93,7 +152,7 @@ function applyCategoriesToUI() {
   document.getElementById('list-categories').innerHTML = userCategories.map(c => `
     <li>
       <div class="cat-info">
-        <h5>${c.name}</h5>
+        <h5><i class="ph ${c.icon}" style="color:var(--sage-primary);"></i> ${c.name}</h5>
         <p>Sub: ${c.subs.length ? c.subs.join(', ') : '-'}</p>
         <p>Opsi: ${[c.longDate?'Tgl Panjang':'', c.timeRange?'Lama Wkt':'', c.deadline?'Deadline':'', c.startTime?'Jam Mulai':'', c.finishFast?'Tbl Selesai':''].filter(Boolean).join(', ')}</p>
       </div>
@@ -165,10 +224,11 @@ document.getElementById('btn-login').addEventListener('click', async () => { try
 document.getElementById('btn-register').addEventListener('click', async () => { try { await createUserWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } catch (e) { document.getElementById('login-error').textContent = 'Gagal daftar.'; }});
 document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
-// PENGATURAN KATEGORI
+
 function resetCatForm() { 
   editCatMode = null; document.getElementById('set-cat-name').value = ''; document.getElementById('set-sub-cat').value = '';
   document.querySelectorAll('.chk-label input').forEach(chk => chk.checked = false);
+  renderIconPicker('ph-folder');
   document.getElementById('btn-save-cat').textContent = "Simpan Kategori"; document.getElementById('btn-cancel-edit-cat').style.display = 'none';
 }
 document.getElementById('btn-cancel-edit-cat').addEventListener('click', resetCatForm);
@@ -177,7 +237,7 @@ document.getElementById('btn-save-cat').addEventListener('click', async () => {
   if(!name) return alert("Nama Kategori tidak boleh kosong!");
   const subsRaw = document.getElementById('set-sub-cat').value;
   const newCat = {
-    name: name, subs: subsRaw ? subsRaw.split(',').map(s => s.trim()).filter(s => s) : [],
+    name: name, icon: document.getElementById('set-cat-icon').value, subs: subsRaw ? subsRaw.split(',').map(s => s.trim()).filter(s => s) : [],
     longDate: document.getElementById('chk-longdate').checked, timeRange: document.getElementById('chk-timerange').checked,
     deadline: document.getElementById('chk-deadline').checked, startTime: document.getElementById('chk-starttime').checked, finishFast: document.getElementById('chk-finishfast').checked
   };
@@ -193,6 +253,7 @@ document.getElementById('btn-save-cat').addEventListener('click', async () => {
   }
   resetCatForm(); await saveUserSettings();
 });
+
 document.getElementById('list-categories').addEventListener('click', async (e) => {
   const btnDel = e.target.closest('.btn-del-cat'); const btnEdit = e.target.closest('.btn-edit-cat');
   if(btnDel && confirm("Hapus kategori ini?")) {
@@ -205,6 +266,7 @@ document.getElementById('list-categories').addEventListener('click', async (e) =
       document.getElementById('chk-longdate').checked = cat.longDate; document.getElementById('chk-timerange').checked = cat.timeRange;
       document.getElementById('chk-deadline').checked = cat.deadline; document.getElementById('chk-starttime').checked = cat.startTime;
       document.getElementById('chk-finishfast').checked = cat.finishFast;
+      renderIconPicker(cat.icon || 'ph-folder');
       editCatMode = cat.name; document.getElementById('btn-save-cat').textContent = "Update Kategori"; document.getElementById('btn-cancel-edit-cat').style.display = 'inline-block';
     }
   }
@@ -219,15 +281,17 @@ function attachSidebarListeners() {
       document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); item.classList.add('active');
       currentFilter = { type: item.getAttribute('data-filter'), value: item.getAttribute('data-value') };
       if(window.innerWidth > 768) { document.getElementById('header-subtitle').textContent = `Menampilkan: ${item.querySelector('.sidebar-text').textContent}`; } 
-      else { document.getElementById('sidebar').classList.add('minimized'); }
       renderTasksUI();
+      // Auto tutup sidebar di mobile jika pilih menu
+      if(window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.add('minimized');
+      }
     });
   });
 }
 document.getElementById('btn-toggle-sidebar').addEventListener('click', () => { document.getElementById('sidebar').classList.toggle('minimized'); });
 
-
-// --- SIMPAN & UPDATE KEGIATAN ---
+// SIMPAN TUGAS
 document.getElementById('btn-cancel').addEventListener('click', () => {
   document.getElementById('modal').classList.remove('active');
   editingTaskId = null;
@@ -238,14 +302,10 @@ document.getElementById('btn-add-task').addEventListener('click', () => {
   document.getElementById('modal-form-title').textContent = "Buat Kegiatan Baru";
   document.getElementById('btn-save').textContent = "Simpan";
   
-  document.getElementById('input-title').value = '';
-  document.getElementById('input-notes').value = ''; 
-  document.getElementById('val-date-start').value = '';
-  document.getElementById('val-date-end').value = '';
-  document.getElementById('val-date-deadline').value = '';
-  document.getElementById('val-default-date').value = '';
-  document.getElementById('val-time-start').value = '';
-  document.getElementById('val-time-end').value = '';
+  document.getElementById('input-title').value = ''; document.getElementById('input-notes').value = ''; 
+  document.getElementById('val-date-start').value = ''; document.getElementById('val-date-end').value = '';
+  document.getElementById('val-date-deadline').value = ''; document.getElementById('val-default-date').value = '';
+  document.getElementById('val-time-start').value = ''; document.getElementById('val-time-end').value = '';
   document.getElementById('val-time-only').value = '';
 
   if(userCategories.length > 0) {
@@ -326,7 +386,6 @@ document.getElementById('btn-save').addEventListener('click', async () => {
 });
 
 
-// --- RENDER DATA KEGIATAN & TATA LETAK BARU ---
 function fetchTasksFromDB() {
   onSnapshot(query(collection(db, "tasks"), where("uid", "==", currentUser.uid)), (snapshot) => {
     allTasks = [];
@@ -354,10 +413,8 @@ function renderTasksUI() {
     let dateHtml = '';
     let timeHtml = '';
 
-    // LOGIKA PENYUSUNAN BARIS TANGGAL
     if(task.dateStart && task.dateEnd) {
       if (task.dateStart === task.dateEnd) {
-        // Jika hari sama, sebut sekali!
         dateHtml = `<div class="meta-row"><i class="ph ph-calendar"></i> ${formatDateIndo(task.dateStart)}</div>`;
       } else {
         dateHtml = `<div class="meta-row"><i class="ph ph-calendar"></i> ${formatDateIndo(task.dateStart)} s/d ${formatDateIndo(task.dateEnd)}</div>`;
@@ -368,12 +425,14 @@ function renderTasksUI() {
       dateHtml = `<div class="meta-row"><i class="ph ph-calendar"></i> ${formatDateIndo(task.date)}</div>`;
     }
 
-    // LOGIKA PENYUSUNAN BARIS WAKTU/JAM
     if(task.timeStart && task.timeEnd) {
       timeHtml = `<div class="meta-row"><i class="ph ph-clock"></i> ${task.timeStart} - ${task.timeEnd}</div>`;
     } else if(task.timeStart) {
       timeHtml = `<div class="meta-row"><i class="ph ph-clock"></i> Mulai Jam ${task.timeStart}</div>`;
     }
+
+    const catObj = userCategories.find(c => c.name === task.category);
+    const iconClass = catObj ? catObj.icon : 'ph-folder';
 
     let subDisp = task.subCategory ? `<span>🏷️ ${task.subCategory}</span>` : '';
     let notesDisp = task.notes ? `<div class="notes-display">${task.notes}</div>` : '';
@@ -388,14 +447,12 @@ function renderTasksUI() {
           <h3>${task.title}</h3>
           
           <div class="task-meta">
-            <!-- Waktu & Tanggal punya baris sendiri (Vertikal) -->
             <div class="meta-schedule">
               ${dateHtml}
               ${timeHtml}
             </div>
-            <!-- Badge diletakkan berdampingan (Horizontal) -->
             <div class="meta-badges">
-              <span class="badge-cat">${task.category}</span>
+              <span class="badge-cat"><i class="ph ${iconClass}"></i> ${task.category}</span>
               ${subDisp}
             </div>
           </div>
@@ -413,7 +470,6 @@ function renderTasksUI() {
     card.querySelector('.task-checkbox').addEventListener('change', async (e) => await updateDoc(doc(db, "tasks", task.id), { completed: e.target.checked }));
     card.querySelector('.btn-delete-task').addEventListener('click', async () => { if(confirm(`Hapus?`)) await deleteDoc(doc(db, "tasks", task.id)); });
     
-    // FUNGSI LOAD DATA SAAT TOMBOL EDIT TUGAS DIKLIK
     card.querySelector('.btn-edit-task').addEventListener('click', () => {
       editingTaskId = task.id;
       document.getElementById('modal-form-title').textContent = "Edit Kegiatan";
