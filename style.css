@@ -19,11 +19,12 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 .screen { display: none; }
 .screen.active { display: flex; }
 
-.input-group { display: flex; flex-direction: column; margin-bottom: 12px; width: 100%; }
+.input-group { display: flex; flex-direction: column; margin-bottom: 12px; }
 .input-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
 .input-group input, .input-group select { padding: 10px; border: 1px solid var(--sage-light); border-radius: 8px; font-size: 13px; outline: none; background: rgba(255,255,255,0.8); transition: border 0.2s; }
 .input-group input:focus, .input-group select:focus { border-color: var(--sage-primary); }
 .w-50 { width: 50%; }
+.w-100 { width: 100%; }
 .form-row { display: flex; gap: 12px; width: 100%; }
 
 #login-screen { height: 100vh; justify-content: center; align-items: center; }
@@ -111,6 +112,8 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 .meta-badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .meta-badges span { background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 6px; font-weight: 500; border: 1px solid rgba(0,0,0,0.05); font-size: 11px;}
 .badge-cat { background: var(--sage-light) !important; color: var(--sage-dark) !important; font-weight: 600 !important; display: flex; align-items: center; gap: 4px; }
+/* Indikator Badge Rutinitas */
+.badge-routine { background: rgba(138, 158, 134, 0.15) !important; color: var(--sage-dark) !important; border: 1px dashed var(--sage-primary) !important; display: flex; align-items: center; gap: 4px; }
 
 textarea { resize: vertical; padding: 10px; border: 1px solid var(--sage-light); border-radius: 8px; font-size: 13px; outline: none; background: rgba(255,255,255,0.8); }
 textarea:focus { border-color: var(--sage-primary); }
