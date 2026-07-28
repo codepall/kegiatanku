@@ -27,7 +27,6 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 .w-100 { width: 100%; }
 .form-row { display: flex; gap: 12px; width: 100%; }
 
-#login-screen { height: 100vh; justify-content: center; align-items: center; }
 .login-card { padding: 32px; border-radius: 20px; text-align: center; width: 100%; max-width: 320px; }
 .login-card h1 { color: var(--sage-dark); font-size: 24px; margin-bottom: 4px; }
 .login-card p { color: var(--text-muted); font-size: 13px; margin-bottom: 24px; }
@@ -58,7 +57,6 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 .nav-links { list-style: none; flex-grow: 1; overflow-y: auto; overflow-x: hidden; width: 100%; }
 .nav-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; padding: 12px 12px 4px 16px; font-weight: 600; }
 
-/* CSS COUNTER & MENU SIDEBAR BARU */
 .nav-item { 
   display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 12px; margin-bottom: 4px; 
   color: var(--text-muted); cursor: pointer; transition: background-color 0.2s, color 0.2s; 
@@ -80,8 +78,10 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 .user-info { display: flex; flex-direction: column; margin-left: 12px; }
 #btn-logout { background: none; border: none; color: #d9534f; cursor: pointer; text-align: left; font-size: 11px; font-weight: 500; padding: 0; }
 
-.content { flex-grow: 1; padding: 32px; overflow-y: auto; display: flex; justify-content: center; position: relative; z-index: 1; }
-.content-wrapper { width: 100%; max-width: 760px; }
+/* FIX BUG: Padding bottom yang luas mencegah kartu bawah terpotong */
+.content { flex-grow: 1; padding: 32px; padding-bottom: 140px; overflow-y: auto; display: flex; justify-content: center; position: relative; z-index: 1; }
+.content-wrapper { width: 100%; max-width: 760px; padding-bottom: 40px; }
+
 .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
 .main-header h1 { font-size: 24px; color: var(--text-main); }
 .main-header p { color: var(--text-muted); font-size: 13px; }
@@ -157,7 +157,7 @@ textarea:focus { border-color: var(--sage-primary); }
 .btn-del-cat { background: #ffecec; color: #d9534f; }
 .btn-del-cat:hover { background: #d9534f; color: white; }
 
-/* CSS DASHBOARD VIEW */
+/* DASHBOARD GRID STYLES */
 .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
 .stat-card { background: rgba(255,255,255,0.7); border: 1px solid var(--sage-light); padding: 16px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: 0.2s;}
 .stat-card:hover { transform: translateY(-2px); border-color: var(--sage-primary);}
@@ -168,7 +168,7 @@ textarea:focus { border-color: var(--sage-primary); }
 @media (max-width: 768px) {
   body { font-size: 12px; }
   .sidebar { position: fixed; top: 0; left: 0; height: 100vh; box-shadow: 4px 0 20px rgba(0,0,0,0.15); }
-  .content { margin-left: 72px; width: calc(100vw - 72px); padding: 16px; }
+  .content { margin-left: 72px; width: calc(100vw - 72px); padding: 16px; padding-bottom: 140px; }
   .main-header { flex-direction: column; align-items: stretch; }
   .header-actions { width: 100%; justify-content: space-between; }
   .search-date { flex-grow: 1; }
