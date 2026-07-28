@@ -78,9 +78,9 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 .user-info { display: flex; flex-direction: column; margin-left: 12px; }
 #btn-logout { background: none; border: none; color: #d9534f; cursor: pointer; text-align: left; font-size: 11px; font-weight: 500; padding: 0; }
 
-/* FIX BUG: Padding bottom yang luas mencegah kartu bawah terpotong */
-.content { flex-grow: 1; padding: 32px; padding-bottom: 140px; overflow-y: auto; display: flex; justify-content: center; position: relative; z-index: 1; }
-.content-wrapper { width: 100%; max-width: 760px; padding-bottom: 40px; }
+/* FIX BUG SCROLL: Menghapus display flex dari .content dan menyempurnakan content-wrapper */
+.content { flex-grow: 1; padding: 32px; overflow-y: auto; position: relative; z-index: 1; }
+.content-wrapper { width: 100%; max-width: 760px; margin: 0 auto; padding-bottom: 120px; }
 
 .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
 .main-header h1 { font-size: 24px; color: var(--text-main); }
@@ -157,7 +157,6 @@ textarea:focus { border-color: var(--sage-primary); }
 .btn-del-cat { background: #ffecec; color: #d9534f; }
 .btn-del-cat:hover { background: #d9534f; color: white; }
 
-/* DASHBOARD GRID STYLES */
 .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
 .stat-card { background: rgba(255,255,255,0.7); border: 1px solid var(--sage-light); padding: 16px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: 0.2s;}
 .stat-card:hover { transform: translateY(-2px); border-color: var(--sage-primary);}
@@ -165,13 +164,19 @@ textarea:focus { border-color: var(--sage-primary); }
 .stat-card .num { font-size: 28px; color: var(--sage-dark); font-weight: 600; line-height: 1; }
 .stat-details { font-size: 11px; color: var(--text-muted); margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--glass-border); }
 
+/* MOBILE RESPONSIVE UI */
 @media (max-width: 768px) {
   body { font-size: 12px; }
   .sidebar { position: fixed; top: 0; left: 0; height: 100vh; box-shadow: 4px 0 20px rgba(0,0,0,0.15); }
-  .content { margin-left: 72px; width: calc(100vw - 72px); padding: 16px; padding-bottom: 140px; }
+  
+  /* PADDING HP YANG SANGAT AMAN */
+  .content { margin-left: 72px; width: calc(100vw - 72px); padding: 16px; height: 100vh; overflow-y: auto;}
+  .content-wrapper { padding-bottom: 180px; }
+
   .main-header { flex-direction: column; align-items: stretch; }
   .header-actions { width: 100%; justify-content: space-between; }
   .search-date { flex-grow: 1; }
+  
   .task-card { padding: 12px; align-items: flex-start; flex-direction: column; }
   .task-info { align-items: flex-start; gap: 10px; width: 100%;}
   .task-details h3 { font-size: 14px; line-height: 1.3; }
