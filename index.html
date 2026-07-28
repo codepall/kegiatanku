@@ -10,10 +10,8 @@
 </head>
 <body>
 
-  <!-- Efek Blur Latar Belakang -->
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
-  <!-- Layar Login -->
   <div id="login-screen" class="screen active">
     <div class="login-card glass-panel">
       <h1>JadwalKu.</h1>
@@ -34,10 +32,8 @@
     </div>
   </div>
 
-  <!-- Layar Aplikasi -->
   <div id="app-screen" class="screen layout">
     
-    <!-- Sidebar Navigation Rail -->
     <aside class="sidebar glass-panel" id="sidebar">
       <div class="sidebar-header">
         <button id="btn-toggle-sidebar" class="btn-icon"><i class="ph ph-list"></i></button>
@@ -45,15 +41,22 @@
       </div>
       
       <ul class="nav-links" id="sidebar-nav">
+        <!-- FITUR BARU: MENU DASHBOARD & COUNTER -->
+        <li class="nav-item" id="btn-open-dashboard" data-filter="dashboard">
+          <div class="nav-item-left"><i class="ph ph-chart-pie-slice"></i> <span class="sidebar-text">Dashboard</span></div>
+        </li>
         <li class="nav-label sidebar-text">Status</li>
         <li class="nav-item active" data-filter="status" data-value="all">
-          <i class="ph ph-files"></i> <span class="sidebar-text">Semua Kegiatan</span>
+          <div class="nav-item-left"><i class="ph ph-files"></i> <span class="sidebar-text">Semua</span></div>
+          <span class="nav-counter" id="count-all">0</span>
         </li>
         <li class="nav-item" data-filter="status" data-value="pending">
-          <i class="ph ph-clock"></i> <span class="sidebar-text">Belum Selesai</span>
+          <div class="nav-item-left"><i class="ph ph-clock"></i> <span class="sidebar-text">Belum</span></div>
+          <span class="nav-counter" id="count-pending">0</span>
         </li>
         <li class="nav-item" data-filter="status" data-value="completed">
-          <i class="ph ph-check-circle"></i> <span class="sidebar-text">Selesai</span>
+          <div class="nav-item-left"><i class="ph ph-check-circle"></i> <span class="sidebar-text">Selesai</span></div>
+          <span class="nav-counter" id="count-completed">0</span>
         </li>
         
         <li class="nav-label sidebar-text" style="margin-top:12px;">Kategori</li>
@@ -61,10 +64,10 @@
 
         <li class="nav-label sidebar-text" style="margin-top:12px;">Opsi</li>
         <li class="nav-item" id="btn-open-schedule">
-          <i class="ph ph-calendar-plus"></i> <span class="sidebar-text">Atur Jadwal</span>
+          <div class="nav-item-left"><i class="ph ph-calendar-plus"></i> <span class="sidebar-text">Atur Jadwal</span></div>
         </li>
         <li class="nav-item" id="btn-open-settings">
-          <i class="ph ph-gear"></i> <span class="sidebar-text">Atur Kategori</span>
+          <div class="nav-item-left"><i class="ph ph-gear"></i> <span class="sidebar-text">Atur Kategori</span></div>
         </li>
       </ul>
 
@@ -79,7 +82,7 @@
 
     <main class="content">
       <div class="content-wrapper">
-        <header class="main-header">
+        <header class="main-header" id="main-header">
           <div class="header-titles">
             <h1 id="greeting">Halo!</h1>
             <p id="header-subtitle">Berikut adalah jadwalmu hari ini.</p>
@@ -91,11 +94,13 @@
         </header>
         
         <div class="task-container" id="task-list"></div>
+        
+        <!-- DASHBOARD VIEW -->
+        <div id="dashboard-view" style="display: none;"></div>
       </div>
     </main>
   </div>
 
-  <!-- Modal Tambah / Edit Kegiatan -->
   <div id="modal" class="modal">
     <div class="modal-content glass-panel" style="max-height: 90vh; overflow-y: auto;">
       <div class="modal-header">
@@ -148,7 +153,6 @@
         <div class="input-group w-50"><label>Jam Selesai</label><input type="time" id="val-time-end"></div>
       </div>
 
-      <!-- OPSI BARU: JAM MULAI BERSEBELAHAN DENGAN RUTINITAS -->
       <div class="form-row" id="field-start-time-row" style="display: none;">
         <div class="input-group" id="field-start-time" style="display: none;">
           <label>Jam Mulai</label>
@@ -177,7 +181,6 @@
     </div>
   </div>
 
-  <!-- Modal Pengaturan Kategori -->
   <div id="modal-settings" class="modal">
     <div class="modal-content glass-panel" style="max-height: 85vh; overflow-y: auto; max-width: 460px;">
       <div class="modal-header">
@@ -208,7 +211,6 @@
           <label class="chk-label"><input type="checkbox" id="chk-deadline"> Deadline</label>
           <label class="chk-label"><input type="checkbox" id="chk-starttime"> Jam Mulai</label>
           <label class="chk-label"><input type="checkbox" id="chk-finishfast"> Selesaikan Cepat</label>
-          <!-- TAMBAHAN OPSI RUTINITAS -->
           <label class="chk-label" style="color: var(--sage-dark); font-weight: 500;"><input type="checkbox" id="chk-routine"> Rutinitas</label>
         </div>
         <div class="form-row" style="margin-top: 16px;">
@@ -223,7 +225,6 @@
     </div>
   </div>
 
-  <!-- Modal Pengaturan Jadwal Mingguan MANUAL -->
   <div id="modal-schedule" class="modal">
     <div class="modal-content glass-panel" style="max-height: 85vh; overflow-y: auto; max-width: 480px;">
       <div class="modal-header">
