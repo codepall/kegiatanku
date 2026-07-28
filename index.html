@@ -79,7 +79,6 @@
 
     <main class="content">
       <div class="content-wrapper">
-        <!-- HEADER DENGAN FITUR CARI TANGGAL -->
         <header class="main-header">
           <div class="header-titles">
             <h1 id="greeting">Halo!</h1>
@@ -149,9 +148,22 @@
         <div class="input-group w-50"><label>Jam Selesai</label><input type="time" id="val-time-end"></div>
       </div>
 
-      <div class="input-group" id="field-start-time" style="display: none;">
-        <label>Jam Mulai Kegiatan</label>
-        <input type="time" id="val-time-only">
+      <!-- OPSI BARU: JAM MULAI BERSEBELAHAN DENGAN RUTINITAS -->
+      <div class="form-row" id="field-start-time-row" style="display: none;">
+        <div class="input-group" id="field-start-time" style="display: none;">
+          <label>Jam Mulai</label>
+          <input type="time" id="val-time-only">
+        </div>
+        <div class="input-group" id="field-routine" style="display: none;">
+          <label>Pengulangan (Rutinitas)</label>
+          <select id="val-routine-type">
+            <option value="">Tidak (Hanya Sekali)</option>
+            <option value="Harian">Harian</option>
+            <option value="Mingguan">Mingguan</option>
+            <option value="Bulanan">Bulanan</option>
+            <option value="Tahunan">Tahunan</option>
+          </select>
+        </div>
       </div>
 
       <div class="input-group">
@@ -196,6 +208,8 @@
           <label class="chk-label"><input type="checkbox" id="chk-deadline"> Deadline</label>
           <label class="chk-label"><input type="checkbox" id="chk-starttime"> Jam Mulai</label>
           <label class="chk-label"><input type="checkbox" id="chk-finishfast"> Selesaikan Cepat</label>
+          <!-- TAMBAHAN OPSI RUTINITAS -->
+          <label class="chk-label" style="color: var(--sage-dark); font-weight: 500;"><input type="checkbox" id="chk-routine"> Rutinitas</label>
         </div>
         <div class="form-row" style="margin-top: 16px;">
           <button id="btn-cancel-edit-cat" class="btn-secondary" style="display: none; flex-grow: 1;">Batal Edit</button>
