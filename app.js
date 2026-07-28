@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -86,7 +86,6 @@ function getTomorrowDate() {
   return `${y}-${m}-${d}`;
 }
 
-// Menentukan awal minggu (Senin) untuk keperluan riset rutinitas mingguan
 function getMonday(d) {
   const date = new Date(d);
   const day = date.getDay() || 7; 
@@ -95,7 +94,6 @@ function getMonday(d) {
   return date.getTime();
 }
 
-// LOGIKA RESET OTOMATIS RUTINITAS (Berdasarkan Waktu Lokal)
 async function checkAutoResets(tasks) {
   const now = new Date();
   const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -126,7 +124,6 @@ async function checkAutoResets(tasks) {
     }
   }
 }
-
 
 if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('minimized');
 
@@ -207,7 +204,6 @@ async function saveUserSettings() {
 function applyCategoriesToUI() {
   document.getElementById('input-category').innerHTML = userCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
   
-  // RENDER MENU KIRI DENGAN COUNTER
   document.getElementById('dynamic-categories-sidebar').innerHTML = userCategories.map(c => `
     <li class="nav-item" data-filter="category" data-value="${c.name}">
       <div class="nav-item-left"><i class="ph ${c.icon}"></i> <span class="sidebar-text">${c.name}</span></div>
@@ -229,7 +225,7 @@ function applyCategoriesToUI() {
     </li>
   `).join('');
   
-  updateCounters(); // Panggil update angka counter
+  updateCounters();
 }
 
 function updateCounters() {
@@ -250,7 +246,6 @@ function updateCounters() {
     if (el) {
       const catTasks = allTasks.filter(t => t.category === c.name);
       const catDone = catTasks.filter(t => t.completed).length;
-      // Format 2/5 (selesai / total)
       el.textContent = `${catDone}/${catTasks.length}`;
     }
   });
@@ -274,7 +269,7 @@ function renderDashboard() {
         </div>
       </div>
       <div class="stat-card">
-        <h4><i class="ph ph-files" style="color:var(--sage-primary); font-size:18px;"></i> Total Kegiatan</h4>
+        <h4><i class="ph ph-files" style="color:var(--sage-primary); font-size:18px;"></i> Total Kegiatan (Bukan Rutinitas)</h4>
         <div class="num">${normals.length}</div>
         <div class="stat-details">
           <span style="color:var(--sage-primary);">Selesai: ${normals.filter(t=>t.completed).length}</span> &nbsp;|&nbsp; 
@@ -301,7 +296,6 @@ function renderDashboard() {
   `;
   document.getElementById('dashboard-view').innerHTML = dashHtml;
 }
-
 
 function renderScheduleModal() {
   const matrixContainer = document.getElementById('schedule-matrix');
@@ -359,7 +353,6 @@ document.getElementById('btn-save-schedule').addEventListener('click', async () 
   btn.textContent = "Simpan Jadwal";
 });
 
-
 function updateFormInputs() {
   const cat = userCategories.find(c => c.name === document.getElementById('input-category').value);
   if(!cat) return;
@@ -388,7 +381,6 @@ function updateFormInputs() {
   
   document.getElementById('field-default-date').style.display = (!cat.longDate && !cat.deadline) ? 'flex' : 'none';
 
-  // LOGIKA TAMPILAN RUTINITAS DAN JAM MULAI BERDAMPINGAN
   const showStartTime = cat.startTime && !cat.timeRange;
   const showRoutine = cat.routine;
   
@@ -416,8 +408,6 @@ document.getElementById('val-pr-deadline-type').addEventListener('change', (e) =
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
-    document.getElementById('login-screen').classList.remove('active');
-    document.getElementById('app-screen').classList.add('active');
     if ("Notification" in window && Notification.permission !== "granted") Notification.requestPermission();
     
     const dName = user.email.split("@")[0];
@@ -428,13 +418,10 @@ onAuthStateChanged(auth, async (user) => {
     fetchTasksFromDB();
     startNotificationChecker();
   } else {
-    currentUser = null;
-    document.getElementById('app-screen').classList.remove('active');
-    document.getElementById('login-screen').classList.add('active');
+    window.location.href = 'login.html';
   }
 });
-document.getElementById('btn-login').addEventListener('click', async () => { try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } catch (e) { document.getElementById('login-error').textContent = 'Gagal login.'; }});
-document.getElementById('btn-register').addEventListener('click', async () => { try { await createUserWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value); } catch (e) { document.getElementById('login-error').textContent = 'Gagal daftar.'; }});
+
 document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
 function resetCatForm() { 
@@ -564,7 +551,6 @@ document.getElementById('btn-save').addEventListener('click', async () => {
     payload.routineType = document.getElementById('val-routine-type').value || null;
   }
 
-  // KEBAL BUG SAAT MENGHAPUS DATA EDIT:
   Object.keys(payload).forEach(k => {
     if(payload[k] === undefined || payload[k] === "") {
       if(editingTaskId) payload[k] = null; 
@@ -586,7 +572,6 @@ function fetchTasksFromDB() {
     let tempTasks = [];
     snapshot.forEach(docSnap => { tempTasks.push({ id: docSnap.id, ...docSnap.data() }); });
     
-    // Mengecek apakah ada rutinitas yang perlu direset karena siklus telah berganti
     await checkAutoResets(tempTasks);
     
     allTasks = tempTasks;
@@ -622,7 +607,6 @@ function renderTasksUI() {
       if(t.date === dateStr || t.dateDeadline === dateStr) return true;
       if(t.dateStart && t.dateEnd) return (dateStr >= t.dateStart && dateStr <= t.dateEnd);
       if(t.routineType === 'Harian') return true; 
-      // Untuk rutinitas mingguan/bulanan bisa ditingkatkan kedepannya
       return false;
     };
 
@@ -677,7 +661,6 @@ function renderTasksUI() {
 
     let subDisp = task.subCategory ? `<span>🏷️ ${task.subCategory}</span>` : '';
     let notesDisp = task.notes ? `<div class="notes-display">${task.notes}</div>` : '';
-    // MENAMPILKAN TOMBOL SELESAI CEPAT JIKA DIA RUTINITAS
     let btnFinishFast = (task.finishFast || task.routineType) && !task.completed ? `<button class="btn-finish"><i class="ph ph-check-circle"></i> Selesai</button>` : '';
     
     let pinIcon = task.pinned ? 'ph-fill ph-push-pin' : 'ph ph-push-pin';
@@ -712,7 +695,6 @@ function renderTasksUI() {
       </div>
     `;
     
-    // MENYIMPAN WAKTU PENYELESAIAN JIKA ITU RUTINITAS (Untuk direfill nanti)
     card.querySelector('.task-checkbox').addEventListener('change', async (e) => {
       const isCompleted = e.target.checked;
       let updateData = { completed: isCompleted };
