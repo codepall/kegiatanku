@@ -15,9 +15,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Data Kategori & Jadwal Manual
+// Data Kategori default sekarang memiliki properti "routine: false"
 let userCategories = [
-  { name: "PR", icon: "ph-book-open", subs: ["BIN", "BK", "BIG", "IPS", "PPKn", "Informatika", "IPA", "MAT", "BJ", "SB", "PAI", "PJOK"], longDate: false, timeRange: false, deadline: true, startTime: false, finishFast: false }
+  { name: "PR", icon: "ph-book-open", subs: ["BIN", "BK", "BIG", "IPS", "PPKn", "Informatika", "IPA", "MAT", "BJ", "SB", "PAI", "PJOK"], longDate: false, timeRange: false, deadline: true, startTime: false, finishFast: false, routine: false }
 ];
 let userSchedule = {}; 
 
@@ -27,7 +27,7 @@ let currentFilter = { type: 'status', value: 'all' };
 let editCatMode = null;
 let editingTaskId = null; 
 
-const availableIcons = ['ph-folder', 'ph-book-open', 'ph-users', 'ph-briefcase', 'ph-graduation-cap', 'ph-code', 'ph-game-controller', 'ph-heart', 'ph-star', 'ph-cpu', 'ph-shopping-cart', 'ph-palette', 'ph-music-note', 'ph-camera', 'ph-calendar-check', 'ph-lightning', 'ph-push-pin'];
+const availableIcons = ['ph-folder', 'ph-book-open', 'ph-users', 'ph-briefcase', 'ph-graduation-cap', 'ph-code', 'ph-game-controller', 'ph-heart', 'ph-star', 'ph-cpu', 'ph-shopping-cart', 'ph-palette', 'ph-music-note', 'ph-camera', 'ph-calendar-check', 'ph-lightning', 'ph-push-pin', 'ph-arrows-clockwise'];
 
 function renderIconPicker(selected = 'ph-folder') {
   const picker = document.getElementById('icon-picker');
@@ -69,7 +69,6 @@ function getNextMeetingDate(subCat) {
     if(daysArr.includes(checkDay)) {
       let nextDate = new Date(today);
       nextDate.setDate(today.getDate() + diff);
-      // Mencegah error UTC yang bikin mundur 1 hari (H-1)
       const y = nextDate.getFullYear();
       const m = String(nextDate.getMonth() + 1).padStart(2, '0');
       const d = String(nextDate.getDate()).padStart(2, '0');
@@ -131,7 +130,7 @@ document.getElementById('sidebar-nav').addEventListener('click', (e) => {
   item.classList.add('active');
   
   currentFilter = { type: item.getAttribute('data-filter'), value: item.getAttribute('data-value') };
-  document.getElementById('search-date-input').value = ''; // Reset pencarian jika klik menu kiri
+  document.getElementById('search-date-input').value = ''; 
   
   if (window.innerWidth > 768) { 
     document.getElementById('header-subtitle').textContent = `Menampilkan: ${item.querySelector('.sidebar-text').textContent}`; 
@@ -159,7 +158,7 @@ async function loadUserSettings() {
   const docSnap = await getDoc(doc(db, "userSettings", currentUser.uid));
   if (docSnap.exists()) {
     const data = docSnap.data();
-    userCategories = data.categories.map(c => ({...c, icon: c.icon || 'ph-folder'}));
+    userCategories = data.categories.map(c => ({...c, icon: c.icon || 'ph-folder', routine: c.routine || false}));
     userSchedule = data.schedule || {};
   } else {
     await setDoc(doc(db, "userSettings", currentUser.uid), { categories: userCategories, schedule: userSchedule });
@@ -185,7 +184,7 @@ function applyCategoriesToUI() {
       <div class="cat-info">
         <h5><i class="ph ${c.icon}" style="color:var(--sage-primary);"></i> ${c.name}</h5>
         <p>Sub: ${c.subs.length ? c.subs.join(', ') : '-'}</p>
-        <p>Opsi: ${[c.longDate?'Tgl Panjang':'', c.timeRange?'Lama Wkt':'', c.deadline?'Deadline':'', c.startTime?'Jam Mulai':'', c.finishFast?'Tbl Selesai':''].filter(Boolean).join(', ')}</p>
+        <p>Opsi: ${[c.longDate?'Tgl Panjang':'', c.timeRange?'Lama Wkt':'', c.deadline?'Deadline':'', c.startTime?'Jam Mulai':'', c.finishFast?'Tbl Selesai':'', c.routine?'Rutinitas':''].filter(Boolean).join(', ')}</p>
       </div>
       <div class="cat-actions">
         <button class="btn-edit-cat" data-name="${c.name}"><i class="ph ph-pencil"></i></button>
@@ -251,7 +250,7 @@ document.getElementById('btn-save-schedule').addEventListener('click', async () 
   btn.textContent = "Simpan Jadwal";
 });
 
-
+// LOGIKA LAYOUT FORM INPUT BARU
 function updateFormInputs() {
   const cat = userCategories.find(c => c.name === document.getElementById('input-category').value);
   if(!cat) return;
@@ -278,8 +277,26 @@ function updateFormInputs() {
     document.getElementById('field-deadline').style.display = 'none';
   }
   
-  document.getElementById('field-start-time').style.display = (cat.startTime && !cat.timeRange) ? 'flex' : 'none';
   document.getElementById('field-default-date').style.display = (!cat.longDate && !cat.deadline) ? 'flex' : 'none';
+
+  // LOGIKA TAMPILAN RUTINITAS DAN JAM MULAI BERDAMPINGAN
+  const showStartTime = cat.startTime && !cat.timeRange;
+  const showRoutine = cat.routine;
+  
+  const rowStartRoutine = document.getElementById('field-start-time-row');
+  const elTime = document.getElementById('field-start-time');
+  const elRoutine = document.getElementById('field-routine');
+
+  if (showStartTime || showRoutine) {
+    rowStartRoutine.style.display = 'flex';
+    elTime.style.display = showStartTime ? 'flex' : 'none';
+    elRoutine.style.display = showRoutine ? 'flex' : 'none';
+    
+    elTime.className = showRoutine ? 'input-group w-50' : 'input-group w-100';
+    elRoutine.className = showStartTime ? 'input-group w-50' : 'input-group w-100';
+  } else {
+    rowStartRoutine.style.display = 'none';
+  }
 }
 
 document.getElementById('input-category').addEventListener('change', updateFormInputs);
@@ -329,7 +346,8 @@ document.getElementById('btn-save-cat').addEventListener('click', async () => {
   const newCat = {
     name: name, icon: document.getElementById('set-cat-icon').value, subs: subsRaw ? subsRaw.split(',').map(s => s.trim()).filter(s => s) : [],
     longDate: document.getElementById('chk-longdate').checked, timeRange: document.getElementById('chk-timerange').checked,
-    deadline: document.getElementById('chk-deadline').checked, startTime: document.getElementById('chk-starttime').checked, finishFast: document.getElementById('chk-finishfast').checked
+    deadline: document.getElementById('chk-deadline').checked, startTime: document.getElementById('chk-starttime').checked, finishFast: document.getElementById('chk-finishfast').checked,
+    routine: document.getElementById('chk-routine').checked // SIMPAN RUTINITAS
   };
   
   if (editCatMode) {
@@ -357,6 +375,7 @@ document.getElementById('list-categories').addEventListener('click', async (e) =
       document.getElementById('chk-longdate').checked = cat.longDate; document.getElementById('chk-timerange').checked = cat.timeRange;
       document.getElementById('chk-deadline').checked = cat.deadline; document.getElementById('chk-starttime').checked = cat.startTime;
       document.getElementById('chk-finishfast').checked = cat.finishFast;
+      document.getElementById('chk-routine').checked = cat.routine || false;
       renderIconPicker(cat.icon || 'ph-folder');
       editCatMode = cat.name; document.getElementById('btn-save-cat').textContent = "Update Kategori"; document.getElementById('btn-cancel-edit-cat').style.display = 'inline-block';
     }
@@ -379,6 +398,7 @@ document.getElementById('btn-add-task').addEventListener('click', () => {
   document.getElementById('val-date-deadline').value = ''; document.getElementById('val-default-date').value = '';
   document.getElementById('val-time-start').value = ''; document.getElementById('val-time-end').value = '';
   document.getElementById('val-time-only').value = '';
+  document.getElementById('val-routine-type').value = '';
 
   if(userCategories.length > 0) { document.getElementById('input-category').value = userCategories[0].name; updateFormInputs(); }
   document.getElementById('modal').classList.add('active');
@@ -426,15 +446,25 @@ document.getElementById('btn-save').addEventListener('click', async () => {
 
   if(!cat.longDate && !cat.deadline) {
     payload.date = document.getElementById('val-default-date').value;
-    if(!payload.date) return alert("Isi tanggal kegiatan!");
+    if(!payload.date && !cat.routine) return alert("Isi tanggal kegiatan!"); // Boleh kosong jika dia adalah rutinitas yang tidak kenal tanggal
   }
   if(cat.timeRange) {
     payload.timeStart = document.getElementById('val-time-start').value; payload.timeEnd = document.getElementById('val-time-end').value;
   } else if(cat.startTime) {
     payload.timeStart = document.getElementById('val-time-only').value;
   }
+  
+  if(cat.routine) {
+    payload.routineType = document.getElementById('val-routine-type').value || null;
+  }
 
-  Object.keys(payload).forEach(k => (payload[k] === undefined || payload[k] === "") && delete payload[k]);
+  // KEBAL BUG SAAT MENGHAPUS ISIAN EDIT:
+  Object.keys(payload).forEach(k => {
+    if(payload[k] === undefined || payload[k] === "") {
+      if(editingTaskId) payload[k] = null; // Menimpa ke null agar terhapus di database
+      else delete payload[k]; // Abaikan jika ini tugas baru
+    }
+  });
 
   try {
     btnSave.textContent = "Menyimpan...";
@@ -469,14 +499,14 @@ function renderTasksUI() {
   let filtered = sortedTasks;
   const subtitle = document.getElementById('header-subtitle');
 
-  // LOGIKA PENCARIAN TANGGAL
   if (currentFilter.type === 'date') {
     const targetDate = currentFilter.value;
     
-    // Fungsi bantuan mengecek apakah tugas berlangsung di tanggal tsb
     const isOverlapping = (t, dateStr) => {
       if(t.date === dateStr || t.dateDeadline === dateStr) return true;
       if(t.dateStart && t.dateEnd) return (dateStr >= t.dateStart && dateStr <= t.dateEnd);
+      // Tampilkan rutinitas harian di pencarian tanggal manapun
+      if(t.routineType === 'Harian') return true; 
       return false;
     };
 
@@ -486,7 +516,6 @@ function renderTasksUI() {
       filtered = exactMatches;
       subtitle.textContent = `Menampilkan kegiatan tanggal ${formatDateIndo(targetDate)}`;
     } else {
-      // Cari tanggal paling dekat SETELAH tanggal yang dicari
       let futureTasks = sortedTasks.filter(t => {
         let refDate = t.date || t.dateStart || t.dateDeadline;
         return refDate && refDate > targetDate;
@@ -538,6 +567,9 @@ function renderTasksUI() {
     let pinClass = task.pinned ? 'active' : '';
     let btnPinTask = !task.completed ? `<button class="btn-pin-task ${pinClass}"><i class="${pinIcon}"></i></button>` : '';
 
+    // INDIKATOR RUTINITAS
+    let routineDisp = task.routineType ? `<span class="badge-routine"><i class="ph ph-arrows-clockwise"></i> Rutin: ${task.routineType}</span>` : '';
+
     const card = document.createElement('div');
     card.className = `task-card glass-panel ${task.completed ? 'completed' : ''} ${task.pinned && !task.completed ? 'is-pinned' : ''}`;
     card.innerHTML = `
@@ -547,7 +579,11 @@ function renderTasksUI() {
           <h3>${task.title}</h3>
           <div class="task-meta">
             <div class="meta-schedule">${dateHtml}${timeHtml}</div>
-            <div class="meta-badges"><span class="badge-cat"><i class="ph ${iconClass}"></i> ${task.category}</span>${subDisp}</div>
+            <div class="meta-badges">
+              <span class="badge-cat"><i class="ph ${iconClass}"></i> ${task.category}</span>
+              ${subDisp}
+              ${routineDisp}
+            </div>
           </div>
           ${notesDisp}
         </div>
@@ -600,6 +636,7 @@ function renderTasksUI() {
           document.getElementById('val-time-only').value = task.timeStart;
         }
         if(task.timeEnd) document.getElementById('val-time-end').value = task.timeEnd;
+        if(task.routineType) document.getElementById('val-routine-type').value = task.routineType;
       }, 50);
 
       document.getElementById('modal').classList.add('active');
@@ -620,7 +657,6 @@ function startNotificationChecker() {
     if (Notification.permission === "granted") {
       const now = new Date(); const currentH = now.getHours();
       
-      // Ambil tanggal mutlak waktu lokal!
       const y = now.getFullYear();
       const m = String(now.getMonth() + 1).padStart(2, '0');
       const d = String(now.getDate()).padStart(2, '0');
@@ -642,8 +678,10 @@ function startNotificationChecker() {
         }
         if (t.timeStart && !t.notified) {
           const eventDate = t.dateStart || t.date || t.dateDeadline; 
-          if(eventDate) {
-            const eventTime = new Date(`${eventDate}T${t.timeStart}`);
+          if(eventDate || t.routineType === 'Harian') {
+            // Jika tidak ada tanggal mutlak tapi ini adalah rutinitas Harian, izinkan notif dengan tanggal hari ini
+            const checkDate = eventDate || today; 
+            const eventTime = new Date(`${checkDate}T${t.timeStart}`);
             const minDiff = (eventTime - now) / 1000 / 60;
             if (minDiff > 0 && minDiff <= 30) {
               new Notification("Pengingat Kegiatan!", { body: `"${t.title}" akan dimulai dalam ${Math.round(minDiff)} menit.` });
