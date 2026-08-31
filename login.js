@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDPsRwRf72xaQkSdGn89WdwA3sbJI2Z-z0",
@@ -20,17 +20,12 @@ onAuthStateChanged(auth, (user) => {
 });
 
 document.getElementById('btn-login').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-login');
+  btn.textContent = "Memproses...";
   try {
     await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
   } catch (e) {
     document.getElementById('login-error').textContent = 'Gagal login. Periksa email & sandi.';
-  }
-});
-
-document.getElementById('btn-register').addEventListener('click', async () => {
-  try {
-    await createUserWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
-  } catch (e) {
-    document.getElementById('login-error').textContent = 'Gagal daftar (Min. 6 karakter).';
+    btn.textContent = "Masuk / Login";
   }
 });
