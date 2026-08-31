@@ -12,7 +12,12 @@
   --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+/* Menghilangkan kotak biru (highlight) saat layar HP disentuh */
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+
+/* Menghilangkan garis biru outline saat elemen difokuskan/diklik di Desktop maupun HP */
+*:focus { outline: none !important; }
+
 body { background-color: var(--bg-main); background-image: radial-gradient(circle at top right, #f8faf7, #eef1ec); color: var(--text-main); overflow: hidden; }
 
 .glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: var(--shadow); }
@@ -39,6 +44,11 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
   z-index: 90; opacity: 0; visibility: hidden; transition: opacity 0.5s var(--ease-smooth), visibility 0.5s var(--ease-smooth); 
 }
 .sidebar-overlay.active { opacity: 1; visibility: visible; }
+
+/* FIX DESKTOP BLUR: Menyembunyikan overlay sepenuhnya di layar lebar (desktop) */
+@media (min-width: 769px) {
+  .sidebar-overlay { display: none !important; }
+}
 
 .layout { height: 100vh; width: 100vw; display: flex; position: relative; }
 
@@ -85,7 +95,6 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 .main-header p { color: var(--text-muted); font-size: 13px; }
 .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
 
-/* CSS INPUT PENCARIAN TEKS DAN TANGGAL */
 .search-input, .search-date { padding: 10px 12px; border: 1px solid var(--sage-light); border-radius: 10px; font-size: 12px; outline: none; background: rgba(255,255,255,0.8); color: var(--sage-dark); font-family: 'Poppins', sans-serif; transition: border 0.2s;}
 .search-input { width: 220px; }
 .search-date { cursor: pointer; }
@@ -174,7 +183,6 @@ textarea:focus { border-color: var(--sage-primary); }
 
   .main-header { flex-direction: column; align-items: stretch; }
   .header-actions { width: 100%; justify-content: space-between; flex-wrap: wrap; }
-  /* Search input dibuat sejajar & responsif di HP */
   .search-input, .search-date { flex-grow: 1; width: 48%; max-width: none; }
   .btn-primary { width: 100%; margin-top: 4px; }
   
