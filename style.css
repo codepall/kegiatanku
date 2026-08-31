@@ -49,7 +49,6 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 }
 .sidebar.minimized { width: 72px; }
 
-/* FIX JARAK IKON & TEKS JADWALKU: Menambahkan gap 14px */
 .sidebar-header { display: flex; align-items: center; gap: 14px; padding: 0 12px; margin-bottom: 24px; transition: padding 0.6s var(--ease-smooth); }
 .btn-icon { background: transparent; border: none; font-size: 24px; min-width: 24px; height: 24px; color: var(--sage-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.6s var(--ease-smooth); }
 .sidebar.minimized .btn-icon { transform: rotate(0deg); }
@@ -77,9 +76,7 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 .user-profile { display: flex; align-items: center; padding: 20px 10px 0 10px; border-top: 1px solid var(--glass-border); }
 .user-profile img { width: 28px; height: 28px; min-width: 28px; border-radius: 50%; } 
 .user-info { display: flex; flex-direction: column; margin-left: 12px; }
-#btn-logout { background: none; border: none; color: #d9534f; cursor: pointer; text-align: left; font-size: 11px; font-weight: 500; padding: 0; }
 
-/* FIX JARAK BAWAH DESKTOP: Mengurangi padding-bottom dari 120px menjadi 20px agar natural */
 .content { flex-grow: 1; padding: 32px; overflow-y: auto; position: relative; z-index: 1; }
 .content-wrapper { width: 100%; max-width: 760px; margin: 0 auto; padding-bottom: 20px; }
 
@@ -88,8 +85,11 @@ body { background-color: var(--bg-main); background-image: radial-gradient(circl
 .main-header p { color: var(--text-muted); font-size: 13px; }
 .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
 
-.search-date { padding: 10px 12px; border: 1px solid var(--sage-light); border-radius: 10px; font-size: 12px; outline: none; background: rgba(255,255,255,0.8); color: var(--sage-dark); cursor: pointer; font-family: 'Poppins', sans-serif; transition: border 0.2s;}
-.search-date:focus { border-color: var(--sage-primary); }
+/* CSS INPUT PENCARIAN TEKS DAN TANGGAL */
+.search-input, .search-date { padding: 10px 12px; border: 1px solid var(--sage-light); border-radius: 10px; font-size: 12px; outline: none; background: rgba(255,255,255,0.8); color: var(--sage-dark); font-family: 'Poppins', sans-serif; transition: border 0.2s;}
+.search-input { width: 220px; }
+.search-date { cursor: pointer; }
+.search-input:focus, .search-date:focus { border-color: var(--sage-primary); }
 
 .btn-primary { background-color: var(--sage-primary); color: var(--white); border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background 0.2s; white-space: nowrap; }
 .btn-primary:hover { background-color: var(--sage-dark); }
@@ -169,14 +169,14 @@ textarea:focus { border-color: var(--sage-primary); }
 @media (max-width: 768px) {
   body { font-size: 12px; }
   .sidebar { position: fixed; top: 0; left: 0; height: 100vh; box-shadow: 4px 0 20px rgba(0,0,0,0.15); }
-  
-  /* FIX JARAK BAWAH ANDROID: Diubah jadi 80px agar natural dan tidak kosong melompong */
   .content { margin-left: 72px; width: calc(100vw - 72px); padding: 16px; height: 100vh; overflow-y: auto;}
   .content-wrapper { padding-bottom: 80px; }
 
   .main-header { flex-direction: column; align-items: stretch; }
-  .header-actions { width: 100%; justify-content: space-between; }
-  .search-date { flex-grow: 1; }
+  .header-actions { width: 100%; justify-content: space-between; flex-wrap: wrap; }
+  /* Search input dibuat sejajar & responsif di HP */
+  .search-input, .search-date { flex-grow: 1; width: 48%; max-width: none; }
+  .btn-primary { width: 100%; margin-top: 4px; }
   
   .task-card { padding: 12px; align-items: flex-start; flex-direction: column; }
   .task-info { align-items: flex-start; gap: 10px; width: 100%;}
