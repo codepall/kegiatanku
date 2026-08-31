@@ -22,7 +22,6 @@ let userSchedule = {};
 
 let currentUser = null;
 let allTasks = [];
-// Menambahkan properti "text" pada filter
 let currentFilter = { type: 'status', value: 'all', text: '' }; 
 let editCatMode = null;
 let editingTaskId = null; 
@@ -170,7 +169,6 @@ document.getElementById('sidebar-nav').addEventListener('click', (e) => {
   document.getElementById('sidebar-overlay').classList.remove('active');
 });
 
-// LOGIKA PENCARIAN TANGGAL
 document.getElementById('search-date-input').addEventListener('change', (e) => {
   if (e.target.value) {
     currentFilter = { type: 'date', value: e.target.value, text: currentFilter.text };
@@ -184,7 +182,6 @@ document.getElementById('search-date-input').addEventListener('change', (e) => {
   }
 });
 
-// LOGIKA PENCARIAN TEKS INSTAN
 document.getElementById('search-text-input').addEventListener('input', (e) => {
   currentFilter.text = e.target.value.toLowerCase();
   
@@ -614,7 +611,6 @@ function renderTasksUI() {
   let filtered = sortedTasks;
   const subtitle = document.getElementById('header-subtitle');
 
-  // LOGIKA SUBTITLE DASAR
   let baseSubtitle = "Berikut adalah jadwalmu hari ini.";
   const activeNav = document.querySelector('.nav-item.active .sidebar-text');
   if (activeNav && currentFilter.type !== 'date') {
@@ -664,12 +660,13 @@ function renderTasksUI() {
     filtered = sortedTasks.filter(t => t.category === currentFilter.value);
   }
 
-  // LOGIKA PENCARIAN TEKS DENGAN ANGKA HASIL 
+  // FIX PENCARIAN TEKS: Menambahkan deteksi pada properti subCategory
   if (currentFilter.text) {
     filtered = filtered.filter(t => {
       const titleMatch = t.title && t.title.toLowerCase().includes(currentFilter.text);
       const notesMatch = t.notes && t.notes.toLowerCase().includes(currentFilter.text);
-      return titleMatch || notesMatch;
+      const subCatMatch = t.subCategory && t.subCategory.toLowerCase().includes(currentFilter.text);
+      return titleMatch || notesMatch || subCatMatch;
     });
     subtitle.textContent = `Ditemukan ${filtered.length} hasil untuk pencarian "${currentFilter.text}"`;
   }
