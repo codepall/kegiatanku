@@ -22,7 +22,8 @@ let userSchedule = {};
 
 let currentUser = null;
 let allTasks = [];
-let currentFilter = { type: 'status', value: 'all' };
+// Menambahkan properti "text" pada filter
+let currentFilter = { type: 'status', value: 'all', text: '' }; 
 let editCatMode = null;
 let editingTaskId = null; 
 
@@ -148,12 +149,10 @@ document.getElementById('sidebar-nav').addEventListener('click', (e) => {
   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
   item.classList.add('active');
   
-  currentFilter = { type: item.getAttribute('data-filter'), value: item.getAttribute('data-value') };
-  document.getElementById('search-date-input').value = ''; 
+  currentFilter = { type: item.getAttribute('data-filter'), value: item.getAttribute('data-value'), text: '' };
   
-  if (window.innerWidth > 768 && currentFilter.type !== 'dashboard') { 
-    document.getElementById('header-subtitle').textContent = `Menampilkan: ${item.querySelector('.sidebar-text').textContent}`; 
-  }
+  document.getElementById('search-date-input').value = ''; 
+  document.getElementById('search-text-input').value = ''; 
   
   if (currentFilter.type === 'dashboard') {
     document.getElementById('main-header').style.display = 'none';
@@ -171,9 +170,10 @@ document.getElementById('sidebar-nav').addEventListener('click', (e) => {
   document.getElementById('sidebar-overlay').classList.remove('active');
 });
 
+// LOGIKA PENCARIAN TANGGAL
 document.getElementById('search-date-input').addEventListener('change', (e) => {
   if (e.target.value) {
-    currentFilter = { type: 'date', value: e.target.value };
+    currentFilter = { type: 'date', value: e.target.value, text: currentFilter.text };
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     document.getElementById('main-header').style.display = 'flex';
     document.getElementById('task-list').style.display = 'flex';
@@ -181,6 +181,20 @@ document.getElementById('search-date-input').addEventListener('change', (e) => {
     renderTasksUI();
   } else {
     document.getElementById('sidebar-nav').querySelector('[data-value="all"]').click();
+  }
+});
+
+// LOGIKA PENCARIAN TEKS INSTAN
+document.getElementById('search-text-input').addEventListener('input', (e) => {
+  currentFilter.text = e.target.value.toLowerCase();
+  
+  if(currentFilter.type === 'dashboard') {
+    document.getElementById('sidebar-nav').querySelector('[data-value="all"]').click();
+  } else {
+    document.getElementById('main-header').style.display = 'flex';
+    document.getElementById('task-list').style.display = 'flex';
+    document.getElementById('dashboard-view').style.display = 'none';
+    renderTasksUI();
   }
 });
 
@@ -269,7 +283,7 @@ function renderDashboard() {
         </div>
       </div>
       <div class="stat-card">
-        <h4><i class="ph ph-files" style="color:var(--sage-primary); font-size:18px;"></i> Total Kegiatan (Bukan Rutinitas)</h4>
+        <h4><i class="ph ph-files" style="color:var(--sage-primary); font-size:18px;"></i> Total Kegiatan</h4>
         <div class="num">${normals.length}</div>
         <div class="stat-details">
           <span style="color:var(--sage-primary);">Selesai: ${normals.filter(t=>t.completed).length}</span> &nbsp;|&nbsp; 
@@ -600,6 +614,14 @@ function renderTasksUI() {
   let filtered = sortedTasks;
   const subtitle = document.getElementById('header-subtitle');
 
+  // LOGIKA SUBTITLE DASAR
+  let baseSubtitle = "Berikut adalah jadwalmu hari ini.";
+  const activeNav = document.querySelector('.nav-item.active .sidebar-text');
+  if (activeNav && currentFilter.type !== 'date') {
+    baseSubtitle = `Menampilkan: ${activeNav.textContent}`;
+  }
+  subtitle.textContent = baseSubtitle;
+
   if (currentFilter.type === 'date') {
     const targetDate = currentFilter.value;
     
@@ -642,7 +664,17 @@ function renderTasksUI() {
     filtered = sortedTasks.filter(t => t.category === currentFilter.value);
   }
 
-  if (!filtered.length) return listEl.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:13px; margin-top:20px;">Belum ada kegiatan.</p>`;
+  // LOGIKA PENCARIAN TEKS DENGAN ANGKA HASIL 
+  if (currentFilter.text) {
+    filtered = filtered.filter(t => {
+      const titleMatch = t.title && t.title.toLowerCase().includes(currentFilter.text);
+      const notesMatch = t.notes && t.notes.toLowerCase().includes(currentFilter.text);
+      return titleMatch || notesMatch;
+    });
+    subtitle.textContent = `Ditemukan ${filtered.length} hasil untuk pencarian "${currentFilter.text}"`;
+  }
+
+  if (!filtered.length) return listEl.innerHTML = `<p style="text-align:center; color:var(--text-muted); font-size:13px; margin-top:20px;">Tidak ada kegiatan yang ditemukan.</p>`;
 
   filtered.forEach(task => {
     let dateHtml = ''; let timeHtml = '';
