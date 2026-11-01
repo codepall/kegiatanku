@@ -84,10 +84,11 @@ select {
 
 .nav-counter { background: rgba(138, 158, 134, 0.2); color: var(--sage-dark); padding: 2px 6px; border-radius: 8px; font-size: 10px; font-weight: 600; transition: opacity 0.3s var(--ease-smooth); }
 .sidebar.minimized .nav-counter { opacity: 0; pointer-events: none; display: none; }
-.sidebar-text { font-weight: 600; opacity: 1; transition: opacity 0.3s var(--ease-smooth); }
-.sidebar.minimized .sidebar-text { opacity: 0; pointer-events: none; display: none; }
 
-/* PERBAIKAN: Jarak profil dan sembunyikan logout saat ditutup */
+/* PERBAIKAN JARAK GRUP IKON: Tanpa display:none agar ruang pemisah antar grup tetap terjaga seperti semula */
+.sidebar-text { font-weight: 600; opacity: 1; transition: opacity 0.3s var(--ease-smooth); }
+.sidebar.minimized .sidebar-text { opacity: 0; pointer-events: none; }
+
 .user-profile { flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; padding: 14px 6px 4px 6px; margin-top: auto; border-top: 1px solid var(--glass-border); }
 .user-profile-row { display: flex; align-items: center; }
 .user-profile img { width: 32px; height: 32px; min-width: 32px; border-radius: 50%; border: 1px solid var(--sage-primary); } 
@@ -97,7 +98,7 @@ select {
 .btn-sidebar-logout { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border-radius: 8px; background: rgba(217, 83, 79, 0.12); color: #d9534f; border: 1px solid rgba(217, 83, 79, 0.3); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .btn-sidebar-logout:hover { background: #d9534f; color: var(--white); }
 
-/* Tombol logout HILANG saat sidebar ditutup, mencegah jarak acakak-acakan */
+/* Tombol logout hanya muncul ketika sidebar dibuka */
 .sidebar.minimized .btn-sidebar-logout { display: none !important; }
 
 .content { flex-grow: 1; padding: 32px; overflow-y: auto; position: relative; z-index: 1; }
