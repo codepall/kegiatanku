@@ -50,7 +50,6 @@
         </li>
       </ul>
 
-      <!-- Profil & Tombol Log Out Jelas -->
       <div class="user-profile">
         <div class="user-profile-row">
           <img id="user-avatar" src="" alt="Avatar">
@@ -86,7 +85,6 @@
     </main>
   </div>
 
-  <!-- Modal Tambah / Edit Kegiatan -->
   <div id="modal" class="modal">
     <div class="modal-content glass-panel" style="max-height: 90vh; overflow-y: auto;">
       <div class="modal-header">
@@ -100,12 +98,20 @@
       </div>
 
       <div class="form-row">
+        <!-- Kategori Utama Kustom -->
         <div class="input-group w-50">
-          <label>Kategori</label>
-          <select id="input-category"></select>
+          <label>Kategori Utama</label>
+          <div class="custom-dropdown" id="dropdown-main-category">
+            <div class="dropdown-trigger" id="main-category-trigger">
+              <span id="main-category-label">Pilih Kategori</span>
+              <i class="ph ph-caret-down dropdown-arrow"></i>
+            </div>
+            <div class="dropdown-menu" id="main-category-options"></div>
+            <input type="hidden" id="input-category">
+          </div>
         </div>
         
-        <!-- Custom Dropdown Sub Kategori (Bebas dari Picker Native Chrome) -->
+        <!-- Sub Kategori Kustom -->
         <div class="input-group w-50" id="field-sub-category" style="display: none;">
           <label>Sub Kategori</label>
           <div class="custom-dropdown" id="dropdown-sub-category">
@@ -176,7 +182,6 @@
     </div>
   </div>
 
-  <!-- Modal Pengaturan Kategori -->
   <div id="modal-settings" class="modal">
     <div class="modal-content glass-panel" style="max-height: 85vh; overflow-y: auto; max-width: 460px;">
       <div class="modal-header">
@@ -221,7 +226,6 @@
     </div>
   </div>
 
-  <!-- Modal Pengaturan Jadwal Mingguan -->
   <div id="modal-schedule" class="modal">
     <div class="modal-content glass-panel" style="max-height: 85vh; overflow-y: auto; max-width: 480px;">
       <div class="modal-header">
