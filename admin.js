@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const SUPER_ADMIN_EMAIL = "superadmin@codepall.com";
 
@@ -13,14 +13,15 @@ const firebaseConfig = {
   appId: "1:603325028994:web:b6b123f304d8a69d32b29b"
 };
 
-// Instance Khusus Admin agar terpisah dari sesi login web utama
+// Instance Khusus Admin
 const adminApp = initializeApp(firebaseConfig, "AdminPortalApp");
 const auth = getAuth(adminApp);
 const db = getFirestore(adminApp);
 
-// Instance Sekunder untuk membuat akun baru tanpa mengeluarkan sesi Super Admin
+// Instance Sekunder untuk eksekusi pembuatan, pemblokiran, dan penghapusan akun dari server Firebase Auth
 const secondaryApp = initializeApp(firebaseConfig, "secondaryAuthApp");
 const secondaryAuth = getAuth(secondaryApp);
+const secondaryDb = getFirestore(secondaryApp);
 
 let currentAdminUser = null;
 let managedUsersList = [];
@@ -68,7 +69,7 @@ document.getElementById('btn-admin-logout').addEventListener('click', () => {
   signOut(auth);
 });
 
-// Buat Akun Baru atau Tautkan Akun Lama ke Tabel Kelola
+// Buat Akun Baru atau Tautkan Akun Lama dengan Verifikasi Server Auth
 document.getElementById('btn-create-user').addEventListener('click', async () => {
   const emailInput = document.getElementById('new-user-email');
   const passwordInput = document.getElementById('new-user-password');
@@ -90,43 +91,63 @@ document.getElementById('btn-create-user').addEventListener('click', async () =>
   }
 
   btn.disabled = true;
-  btn.textContent = "Memproses...";
+  btn.textContent = "Memproses ke Server...";
   statusEl.textContent = "";
 
   try {
-    let createdUid = "existing-user";
+    let targetUid = "";
     let isExistingAccount = false;
 
     try {
+      // 1. Buat akun di Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
-      createdUid = userCredential.user.uid;
-      await signOut(secondaryAuth);
+      targetUid = userCredential.user.uid;
     } catch (authError) {
       if (authError.code === 'auth/email-already-in-use') {
-        isExistingAccount = true;
+        // 2. Jika akun sudah ada di Firebase Auth, login di background untuk memverifikasi password & mengambil UID asli
+        try {
+          const signInCred = await signInWithEmailAndPassword(secondaryAuth, email, password);
+          targetUid = signInCred.user.uid;
+          isExistingAccount = true;
+        } catch (pwError) {
+          throw new Error("Email ini sudah terdaftar di Firebase, tetapi password yang Anda masukkan salah!");
+        }
       } else {
         throw authError;
       }
     }
 
-    // Cek apakah email sudah ada di daftar kelola
-    const alreadyExists = managedUsersList.some(u => u.email.toLowerCase() === email);
-    if (alreadyExists) {
-      statusEl.textContent = `Akun ${email} sudah terdaftar di dalam tabel di bawah!`;
-      statusEl.style.color = "var(--sage-dark)";
-      return;
-    }
-
-    const newEntry = {
-      id: Date.now().toString(),
-      uid: createdUid,
+    // Pastikan dokumen userSettings target aktif (tidak terblokir)
+    const targetDocRef = doc(secondaryDb, "userSettings", targetUid);
+    const targetSnap = await getDoc(targetDocRef);
+    const targetData = targetSnap.exists() ? targetSnap.data() : {};
+    await setDoc(targetDocRef, {
+      ...targetData,
       email: email,
+      isBlocked: false,
+      isDeleted: false
+    });
+
+    await signOut(secondaryAuth);
+
+    // Perbarui daftar di dokumen Super Admin
+    const existingIdx = managedUsersList.findIndex(u => u.email.toLowerCase() === email);
+    const userRecord = {
+      id: targetUid,
+      uid: targetUid,
+      email: email,
+      password: password,
+      isBlocked: false,
       createdAt: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
     };
 
-    const updatedList = [...managedUsersList, newEntry];
+    let updatedList = [...managedUsersList];
+    if (existingIdx >= 0) {
+      updatedList[existingIdx] = userRecord;
+    } else {
+      updatedList.push(userRecord);
+    }
 
-    // Simpan ke dokumen userSettings milik Super Admin (Bebas Error Permission!)
     const adminDocRef = doc(db, "userSettings", currentAdminUser.uid);
     const snap = await getDoc(adminDocRef);
     const existingData = snap.exists() ? snap.data() : {};
@@ -137,9 +158,9 @@ document.getElementById('btn-create-user').addEventListener('click', async () =>
     });
 
     if (isExistingAccount) {
-      statusEl.textContent = `Akun lama (${email}) berhasil ditautkan ke daftar kelola!`;
+      statusEl.textContent = `Akun lama (${email}) berhasil diverifikasi dan ditautkan ke User Manager!`;
     } else {
-      statusEl.textContent = `Akun baru (${email}) berhasil dibuat dan siap digunakan!`;
+      statusEl.textContent = `Akun baru (${email}) berhasil dibuat di Firebase Auth dan siap digunakan!`;
     }
     statusEl.style.color = "var(--sage-dark)";
     emailInput.value = "";
@@ -150,11 +171,89 @@ document.getElementById('btn-create-user').addEventListener('click', async () =>
     statusEl.style.color = "#d9534f";
   } finally {
     btn.disabled = false;
-    btn.innerHTML = `<i class="ph ph-plus-circle"></i> Buat Akun Sekarang`;
+    btn.innerHTML = `<i class="ph ph-plus-circle"></i> Simpan & Daftarkan Akun`;
   }
 });
 
-// Memuat Daftar Pengguna dari Dokumen userSettings Super Admin
+// Fungsi Blokir / Buka Blokir Real-Time
+async function toggleBlockUser(u) {
+  let pw = u.password;
+  if (!pw) {
+    pw = prompt(`Masukkan password untuk akun ${u.email} guna memverifikasi perubahan status server:`);
+    if (!pw) return;
+  }
+
+  try {
+    const cred = await signInWithEmailAndPassword(secondaryAuth, u.email, pw);
+    const targetUid = cred.user.uid;
+    const newBlockState = !u.isBlocked;
+
+    const targetDocRef = doc(secondaryDb, "userSettings", targetUid);
+    const targetSnap = await getDoc(targetDocRef);
+    const targetData = targetSnap.exists() ? targetSnap.data() : {};
+
+    await setDoc(targetDocRef, {
+      ...targetData,
+      isBlocked: newBlockState
+    });
+
+    await signOut(secondaryAuth);
+
+    const updatedList = managedUsersList.map(item => {
+      if (item.email === u.email) {
+        return { ...item, uid: targetUid, password: pw, isBlocked: newBlockState };
+      }
+      return item;
+    });
+
+    const adminDocRef = doc(db, "userSettings", currentAdminUser.uid);
+    const snap = await getDoc(adminDocRef);
+    const existingData = snap.exists() ? snap.data() : {};
+    await setDoc(adminDocRef, { ...existingData, managedUsers: updatedList });
+
+  } catch (err) {
+    alert(`Gagal mengubah status akun: ${err.message}`);
+  }
+}
+
+// Fungsi Hapus Akun Permanen dari Server Firebase Authentication
+async function deleteAccountPermanently(u) {
+  if (!confirm(`PERINGATAN: Akun ${u.email} akan dihapus PERMANEN dari database Firebase Authentication dan tidak akan bisa login lagi. Lanjutkan?`)) {
+    return;
+  }
+
+  let pw = u.password;
+  if (!pw) {
+    pw = prompt(`Masukkan password untuk akun ${u.email} guna menghapus permanen dari server Firebase Auth:`);
+    if (!pw) return;
+  }
+
+  try {
+    // 1. Login ke akun target di jalur sekunder
+    const cred = await signInWithEmailAndPassword(secondaryAuth, u.email, pw);
+    const targetUser = cred.user;
+
+    // 2. Tandai terhapus pada dokumen userSettings agar sesi yang sedang aktif langsung terputus real-time
+    const targetDocRef = doc(secondaryDb, "userSettings", targetUser.uid);
+    await setDoc(targetDocRef, { isDeleted: true, isBlocked: true });
+    await deleteDoc(targetDocRef);
+
+    // 3. Hapus permanen akun dari server Firebase Authentication
+    await deleteUser(targetUser);
+
+    // 4. Hapus dari daftar kelola Super Admin
+    const filtered = managedUsersList.filter(item => item.email !== u.email);
+    const adminDocRef = doc(db, "userSettings", currentAdminUser.uid);
+    const snap = await getDoc(adminDocRef);
+    const existingData = snap.exists() ? snap.data() : {};
+    await setDoc(adminDocRef, { ...existingData, managedUsers: filtered });
+
+    alert(`Akun ${u.email} berhasil dihapus permanen dari Firebase Authentication!`);
+  } catch (err) {
+    alert(`Gagal menghapus akun dari server: ${err.message}`);
+  }
+}
+
 function loadManagedUsers() {
   if (!currentAdminUser) return;
   const tbody = document.getElementById('user-table-body');
@@ -165,34 +264,39 @@ function loadManagedUsers() {
     managedUsersList = (docSnap.exists() && docSnap.data().managedUsers) ? docSnap.data().managedUsers : [];
 
     if (managedUsersList.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Belum ada akun di daftar kelola. Ketik email akunmu di form atas untuk menautkannya.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Belum ada akun yang dikelola. Tambahkan atau tautkan akun pada form di atas.</td></tr>';
       return;
     }
 
     managedUsersList.forEach((u) => {
+      const isBlocked = u.isBlocked === true;
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><strong>${u.email}</strong></td>
+        <td>
+          <span class="status-badge ${isBlocked ? 'status-blocked' : 'status-active'}">
+            ${isBlocked ? 'Diblokir' : 'Aktif'}
+          </span>
+        </td>
         <td>${u.createdAt || '-'}</td>
         <td>
-          <button class="btn-del-record" data-id="${u.id}" style="background: #ffecec; border: 1px solid #ffdcdc; color: #d9534f; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 11px;">
-            Hapus dari Tabel
-          </button>
+          <div class="action-group">
+            <button class="btn-toggle-block" style="background: ${isBlocked ? 'var(--sage-light)' : '#fff3cd'}; border: 1px solid ${isBlocked ? 'var(--sage-primary)' : '#ffeeba'}; color: ${isBlocked ? 'var(--sage-dark)' : '#856404'}; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 11px; font-weight: 600;">
+              ${isBlocked ? 'Aktifkan' : 'Blokir Akses'}
+            </button>
+            <button class="btn-del-perm" style="background: #ffecec; border: 1px solid #ffdcdc; color: #d9534f; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 11px; font-weight: 600;">
+              Hapus Permanen
+            </button>
+          </div>
         </td>
       `;
 
-      tr.querySelector('.btn-del-record').addEventListener('click', async () => {
-        if (confirm(`Hapus catatan kelola untuk ${u.email}?`)) {
-          const filtered = managedUsersList.filter(item => item.id !== u.id);
-          const snap = await getDoc(adminDocRef);
-          const existingData = snap.exists() ? snap.data() : {};
-          await setDoc(adminDocRef, { ...existingData, managedUsers: filtered });
-        }
-      });
+      tr.querySelector('.btn-toggle-block').addEventListener('click', () => toggleBlockUser(u));
+      tr.querySelector('.btn-del-perm').addEventListener('click', () => deleteAccountPermanently(u));
 
       tbody.appendChild(tr);
     });
   }, (error) => {
-    tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #d9534f;">Gagal memuat data: ${error.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #d9534f;">Gagal memuat data: ${error.message}</td></tr>`;
   });
 }
