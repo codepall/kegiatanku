@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, deleteDoc, doc, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDPsRwRf72xaQkSdGn89WdwA3sbJI2Z-z0",
@@ -123,16 +123,39 @@ async function checkAutoResets(tasks) {
 
 if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('minimized');
 
+// FUNGSI MENUTUP SIDEBAR DENGAN ANIMASI SMOOTH SCROLL KE ATAS
+function closeSidebarSmoothly() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const navLinks = document.getElementById('sidebar-nav');
+
+  if (navLinks && navLinks.scrollTop > 0) {
+    navLinks.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  sidebar.classList.add('minimized');
+  overlay.classList.remove('active');
+}
+
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('sidebar-overlay');
-  sidebar.classList.toggle('minimized');
-  if (!sidebar.classList.contains('minimized')) overlay.classList.add('active');
-  else overlay.classList.remove('active');
+
+  if (!sidebar.classList.contains('minimized')) {
+    closeSidebarSmoothly();
+  } else {
+    sidebar.classList.remove('minimized');
+    overlay.classList.add('active');
+  }
 }
 
-document.getElementById('btn-toggle-sidebar').addEventListener('click', (e) => { e.stopPropagation(); toggleSidebar(); });
-document.getElementById('sidebar-overlay').addEventListener('click', () => { document.getElementById('sidebar').classList.add('minimized'); document.getElementById('sidebar-overlay').classList.remove('active'); });
+document.getElementById('btn-toggle-sidebar').addEventListener('click', (e) => { 
+  e.stopPropagation(); 
+  toggleSidebar(); 
+});
+
+document.getElementById('sidebar-overlay').addEventListener('click', () => { 
+  closeSidebarSmoothly(); 
+});
 
 document.getElementById('sidebar-nav').addEventListener('click', (e) => {
   const item = e.target.closest('.nav-item');
@@ -160,8 +183,7 @@ document.getElementById('sidebar-nav').addEventListener('click', (e) => {
     document.getElementById('dashboard-view').style.display = 'none';
     renderTasksUI();
   }
-  document.getElementById('sidebar').classList.add('minimized');
-  document.getElementById('sidebar-overlay').classList.remove('active');
+  closeSidebarSmoothly();
 });
 
 document.getElementById('search-date-input').addEventListener('change', (e) => {
@@ -189,20 +211,48 @@ document.getElementById('search-text-input').addEventListener('input', (e) => {
   }
 });
 
-async function loadUserSettings() {
-  const docSnap = await getDoc(doc(db, "userSettings", currentUser.uid));
-  if (docSnap.exists()) {
-    const data = docSnap.data();
-    userCategories = data.categories.map(c => ({...c, icon: c.icon || 'ph-folder', routine: c.routine || false}));
-    userSchedule = data.schedule || {};
-  } else {
-    await setDoc(doc(db, "userSettings", currentUser.uid), { categories: userCategories, schedule: userSchedule });
-  }
-  applyCategoriesToUI();
+// SINKRONISASI REAL-TIME PENGATURAN & STATUS AKUN DARI ADMIN
+function listenUserSettings() {
+  const userDocRef = doc(db, "userSettings", currentUser.uid);
+  
+  onSnapshot(userDocRef, async (docSnap) => {
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      
+      // Cek Real-Time apakah akun diblokir atau dihapus oleh Super Admin
+      if (data.isDeleted || data.isBlocked) {
+        alert("Akses akun Anda telah dinonaktifkan atau dihapus oleh Administrator.");
+        await signOut(auth);
+        window.location.href = 'login.html';
+        return;
+      }
+
+      if (data.categories) {
+        userCategories = data.categories.map(c => ({...c, icon: c.icon || 'ph-folder', routine: c.routine || false}));
+      }
+      userSchedule = data.schedule || {};
+    } else {
+      await setDoc(userDocRef, { 
+        email: currentUser.email,
+        categories: userCategories, 
+        schedule: userSchedule,
+        isBlocked: false
+      });
+    }
+    applyCategoriesToUI();
+  });
 }
 
 async function saveUserSettings() {
-  await setDoc(doc(db, "userSettings", currentUser.uid), { categories: userCategories, schedule: userSchedule });
+  const userDocRef = doc(db, "userSettings", currentUser.uid);
+  const snap = await getDoc(userDocRef);
+  const existing = snap.exists() ? snap.data() : {};
+  await setDoc(userDocRef, { 
+    ...existing,
+    email: currentUser.email,
+    categories: userCategories, 
+    schedule: userSchedule 
+  });
   applyCategoriesToUI();
 }
 
@@ -356,7 +406,6 @@ document.getElementById('btn-save-schedule').addEventListener('click', async () 
   btn.textContent = "Simpan Jadwal";
 });
 
-// LOGIKA RENDER CUSTOM DROPDOWN MAIN KATEGORI
 function renderMainCategoryDropdown() {
   const menu = document.getElementById('main-category-options');
   const label = document.getElementById('main-category-label');
@@ -385,7 +434,6 @@ function renderMainCategoryDropdown() {
   });
 }
 
-// LOGIKA RENDER CUSTOM DROPDOWN SUB KATEGORI
 function renderCustomSubDropdown(subs, activeVal = '') {
   const menu = document.getElementById('sub-category-options');
   const label = document.getElementById('sub-category-label');
@@ -413,7 +461,6 @@ function renderCustomSubDropdown(subs, activeVal = '') {
   });
 }
 
-// BUKA/TUTUP DROPDOWN KUSTOM
 document.getElementById('main-category-trigger')?.addEventListener('click', (e) => {
   e.stopPropagation();
   document.getElementById('dropdown-main-category').classList.toggle('open');
@@ -485,7 +532,6 @@ document.getElementById('val-pr-deadline-type').addEventListener('change', (e) =
   document.getElementById('field-deadline').style.display = (e.target.value === 'khusus') ? 'flex' : 'none';
 });
 
-// OTENTIKASI & SINKRONISASI AKUN LAMA KE ADMIN
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
@@ -495,20 +541,7 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('user-name').textContent = dName.charAt(0).toUpperCase() + dName.slice(1);
     document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${dName}&background=8a9e86&color=fff&bold=true`;
     
-    // MENDETEKSI & MEMASUKKAN AKUN INI KE ADMIN PANEL
-    try {
-      const q = query(collection(db, "managed_users"), where("email", "==", user.email));
-      const snap = await getDocs(q);
-      if (snap.empty) {
-        await addDoc(collection(db, "managed_users"), {
-          uid: user.uid,
-          email: user.email,
-          createdAt: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-        });
-      }
-    } catch(e) {}
-    
-    await loadUserSettings();
+    listenUserSettings();
     fetchTasksFromDB();
     startNotificationChecker();
   } else {
@@ -846,7 +879,6 @@ function renderTasksUI() {
       document.getElementById('input-title').value = task.title;
       document.getElementById('input-notes').value = task.notes || '';
       
-      // Update UI untuk Custom Main Category
       document.getElementById('input-category').value = task.category;
       document.getElementById('main-category-label').textContent = task.category;
       renderMainCategoryDropdown();
