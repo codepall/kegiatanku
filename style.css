@@ -12,7 +12,6 @@
   --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* MENYEMBUNYIKAN SELURUH SCROLLBAR SECARA GLOBAL */
 ::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
@@ -88,6 +87,7 @@ select {
 .sidebar-text { font-weight: 600; opacity: 1; transition: opacity 0.3s var(--ease-smooth); }
 .sidebar.minimized .sidebar-text { opacity: 0; pointer-events: none; display: none; }
 
+/* PERBAIKAN: Jarak profil dan sembunyikan logout saat ditutup */
 .user-profile { flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; padding: 14px 6px 4px 6px; margin-top: auto; border-top: 1px solid var(--glass-border); }
 .user-profile-row { display: flex; align-items: center; }
 .user-profile img { width: 32px; height: 32px; min-width: 32px; border-radius: 50%; border: 1px solid var(--sage-primary); } 
@@ -97,10 +97,8 @@ select {
 .btn-sidebar-logout { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border-radius: 8px; background: rgba(217, 83, 79, 0.12); color: #d9534f; border: 1px solid rgba(217, 83, 79, 0.3); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .btn-sidebar-logout:hover { background: #d9534f; color: var(--white); }
 
-/* Perbaikan posisi ikon Log out saat sidebar ditutup */
-.sidebar.minimized .btn-sidebar-logout { justify-content: center; padding: 10px 0; }
-.sidebar.minimized .btn-sidebar-logout i { margin: 0; font-size: 20px; }
-.sidebar.minimized .btn-sidebar-logout .sidebar-text { display: none; }
+/* Tombol logout HILANG saat sidebar ditutup, mencegah jarak acakak-acakan */
+.sidebar.minimized .btn-sidebar-logout { display: none !important; }
 
 .content { flex-grow: 1; padding: 32px; overflow-y: auto; position: relative; z-index: 1; }
 .content-wrapper { width: 100%; max-width: 760px; margin: 0 auto; padding-bottom: 20px; }
