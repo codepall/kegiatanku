@@ -15,8 +15,20 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Data default kategori sudah disesuaikan dengan daftar Organisasi
 let userCategories = [
-  { name: "PR", icon: "ph-book-open", subs: ["BIN", "BK", "BIG", "IPS", "PPKn", "Informatika", "IPA", "MAT", "BJ", "SB", "PAI", "PJOK"], longDate: false, timeRange: false, deadline: true, startTime: false, finishFast: false, routine: false }
+  { 
+    name: "Organisasi", 
+    icon: "ph-users", 
+    subs: ["PMR", "OSIS", "ROHIS", "Kader Bank Sampah", "Kader Keamanan Pangan", "Kader Kawasan Tanpa Rokok", "Kader Jumantik"], 
+    longDate: true, timeRange: true, deadline: false, startTime: false, finishFast: false, routine: false 
+  },
+  { 
+    name: "PR", 
+    icon: "ph-book-open", 
+    subs: ["BIN", "BK", "BIG", "IPS", "PPKn", "Informatika", "IPA", "MAT", "BJ", "SB", "PAI", "PJOK"], 
+    longDate: false, timeRange: false, deadline: true, startTime: false, finishFast: false, routine: false 
+  }
 ];
 let userSchedule = {}; 
 
@@ -364,15 +376,63 @@ document.getElementById('btn-save-schedule').addEventListener('click', async () 
   btn.textContent = "Simpan Jadwal";
 });
 
-function updateFormInputs() {
+// LOGIKA RENDER CUSTOM DROPDOWN SUB KATEGORI
+function renderCustomSubDropdown(subs, activeVal = '') {
+  const menu = document.getElementById('sub-category-options');
+  const label = document.getElementById('sub-category-label');
+  const hiddenInput = document.getElementById('input-sub-category-val');
+  
+  menu.innerHTML = '';
+  
+  let currentSelection = activeVal || (subs.length > 0 ? subs[0] : '');
+  hiddenInput.value = currentSelection;
+  label.textContent = currentSelection || 'Pilih Sub Kategori';
+  
+  subs.forEach(sub => {
+    const item = document.createElement('div');
+    item.className = `dropdown-item ${sub === currentSelection ? 'selected' : ''}`;
+    item.innerHTML = `<span>${sub}</span> ${sub === currentSelection ? '<i class="ph ph-check"></i>' : ''}`;
+    
+    item.addEventListener('click', () => {
+      hiddenInput.value = sub;
+      label.textContent = sub;
+      menu.querySelectorAll('.dropdown-item').forEach(el => {
+        el.classList.remove('selected');
+        const icon = el.querySelector('i');
+        if(icon) icon.remove();
+      });
+      item.classList.add('selected');
+      item.insertAdjacentHTML('beforeend', '<i class="ph ph-check"></i>');
+      document.getElementById('dropdown-sub-category').classList.remove('open');
+    });
+    
+    menu.appendChild(item);
+  });
+}
+
+// Buka/Tutup Custom Dropdown
+document.getElementById('sub-category-trigger').addEventListener('click', (e) => {
+  e.stopPropagation();
+  document.getElementById('dropdown-sub-category').classList.toggle('open');
+});
+
+document.addEventListener('click', (e) => {
+  const dd = document.getElementById('dropdown-sub-category');
+  if (dd && !dd.contains(e.target)) dd.classList.remove('open');
+});
+
+function updateFormInputs(selectedSubVal = '') {
   const cat = userCategories.find(c => c.name === document.getElementById('input-category').value);
   if(!cat) return;
 
   const fSub = document.getElementById('field-sub-category');
-  if(cat.subs.length) {
+  if(cat.subs && cat.subs.length) {
     fSub.style.display = 'flex';
-    document.getElementById('input-sub-category').innerHTML = cat.subs.map(s => `<option value="${s}">${s}</option>`).join('');
-  } else { fSub.style.display = 'none'; }
+    renderCustomSubDropdown(cat.subs, selectedSubVal);
+  } else { 
+    fSub.style.display = 'none'; 
+    document.getElementById('input-sub-category-val').value = '';
+  }
 
   document.getElementById('field-long-date').style.display = cat.longDate ? 'flex' : 'none';
   document.getElementById('field-time-range').style.display = cat.timeRange ? 'flex' : 'none';
@@ -403,7 +463,6 @@ function updateFormInputs() {
     rowStartRoutine.style.display = 'flex';
     elTime.style.display = showStartTime ? 'flex' : 'none';
     elRoutine.style.display = showRoutine ? 'flex' : 'none';
-    
     elTime.className = showRoutine ? 'input-group w-50' : 'input-group w-100';
     elRoutine.className = showStartTime ? 'input-group w-50' : 'input-group w-100';
   } else {
@@ -411,11 +470,12 @@ function updateFormInputs() {
   }
 }
 
-document.getElementById('input-category').addEventListener('change', updateFormInputs);
+document.getElementById('input-category').addEventListener('change', () => updateFormInputs());
 document.getElementById('val-pr-deadline-type').addEventListener('change', (e) => {
   document.getElementById('field-deadline').style.display = (e.target.value === 'khusus') ? 'flex' : 'none';
 });
 
+// OTENTIKASI USER BIASA
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
@@ -433,7 +493,13 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+// EVENT TOMBOL LOGOUT RESMI
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  if (confirm("Apakah kamu yakin ingin keluar dari akun?")) {
+    await signOut(auth);
+    window.location.href = 'login.html';
+  }
+});
 
 function resetCatForm() { 
   editCatMode = null; document.getElementById('set-cat-name').value = ''; document.getElementById('set-sub-cat').value = '';
@@ -504,7 +570,10 @@ document.getElementById('btn-add-task').addEventListener('click', () => {
   document.getElementById('val-time-only').value = '';
   document.getElementById('val-routine-type').value = '';
 
-  if(userCategories.length > 0) { document.getElementById('input-category').value = userCategories[0].name; updateFormInputs(); }
+  if(userCategories.length > 0) { 
+    document.getElementById('input-category').value = userCategories[0].name; 
+    updateFormInputs(); 
+  }
   document.getElementById('modal').classList.add('active');
 });
 
@@ -523,7 +592,9 @@ document.getElementById('btn-save').addEventListener('click', async () => {
     payload.completed = false; payload.pinned = false; payload.notified = false; payload.notified_hmin1 = false; payload.notified_hday = false; payload.createdAt = new Date();
   }
 
-  if(cat.subs.length) payload.subCategory = document.getElementById('input-sub-category').value;
+  if(cat.subs && cat.subs.length) {
+    payload.subCategory = document.getElementById('input-sub-category-val').value;
+  }
   
   if(cat.longDate) {
     payload.dateStart = document.getElementById('val-date-start').value; payload.dateEnd = document.getElementById('val-date-end').value;
@@ -660,7 +731,6 @@ function renderTasksUI() {
     filtered = sortedTasks.filter(t => t.category === currentFilter.value);
   }
 
-  // FIX PENCARIAN TEKS: Menambahkan deteksi pada properti subCategory
   if (currentFilter.text) {
     filtered = filtered.filter(t => {
       const titleMatch = t.title && t.title.toLowerCase().includes(currentFilter.text);
@@ -736,7 +806,7 @@ function renderTasksUI() {
       await updateDoc(doc(db, "tasks", task.id), updateData);
     });
     
-    card.querySelector('.btn-delete-task').addEventListener('click', async () => { if(confirm(`Hapus?`)) await deleteDoc(doc(db, "tasks", task.id)); });
+    card.querySelector('.btn-delete-task').addEventListener('click', async () => { if(confirm(`Hapus kegiatan ini?`)) await deleteDoc(doc(db, "tasks", task.id)); });
     
     if(!task.completed) {
       card.querySelector('.btn-pin-task').addEventListener('click', async () => {
@@ -752,10 +822,10 @@ function renderTasksUI() {
       document.getElementById('input-title').value = task.title;
       document.getElementById('input-notes').value = task.notes || '';
       document.getElementById('input-category').value = task.category;
-      updateFormInputs(); 
+      
+      updateFormInputs(task.subCategory || ''); 
 
       setTimeout(() => {
-        if(task.subCategory) document.getElementById('input-sub-category').value = task.subCategory;
         if(task.dateStart) document.getElementById('val-date-start').value = task.dateStart;
         if(task.dateEnd) document.getElementById('val-date-end').value = task.dateEnd;
         if(task.dateDeadline) {
