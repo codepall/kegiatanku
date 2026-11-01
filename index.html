@@ -12,7 +12,6 @@
 
   <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
-  <!-- Layar Aplikasi Utama -->
   <div id="app-screen" class="screen layout active">
     
     <aside class="sidebar glass-panel" id="sidebar">
@@ -51,15 +50,19 @@
         </li>
       </ul>
 
+      <!-- Profil & Tombol Log Out Jelas -->
       <div class="user-profile">
-        <img id="user-avatar" src="" alt="Avatar">
-        <div class="user-info sidebar-text">
-          <span id="user-name">Nama</span>
-          <!-- Tombol Logout yang diperjelas dengan Ikon -->
-          <button id="btn-logout" style="display:flex; align-items:center; gap:4px; background:none; border:none; color:#d9534f; cursor:pointer; font-size:11px; font-weight:500; padding:0; margin-top:2px;">
-            <i class="ph ph-sign-out" style="font-size:14px;"></i> Logout
-          </button>
+        <div class="user-profile-row">
+          <img id="user-avatar" src="" alt="Avatar">
+          <div class="user-info sidebar-text">
+            <span id="user-name">Pengguna</span>
+            <span style="font-size: 10px; color: var(--text-muted);">Online</span>
+          </div>
         </div>
+        <button id="btn-logout" class="btn-sidebar-logout" title="Keluar Akun">
+          <i class="ph ph-sign-out"></i>
+          <span class="sidebar-text">Log Out</span>
+        </button>
       </div>
     </aside>
 
@@ -71,7 +74,6 @@
             <p id="header-subtitle">Berikut adalah jadwalmu hari ini.</p>
           </div>
           <div class="header-actions">
-            <!-- FITUR BARU: Pencarian Teks Instan -->
             <input type="text" id="search-text-input" class="search-input" placeholder="Cari tag, nama, catatan..." title="Cari kegiatan / tag">
             <input type="date" id="search-date-input" class="search-date" title="Cari berdasarkan tanggal">
             <button id="btn-add-task" class="btn-primary">+ Kegiatan</button>
@@ -102,9 +104,18 @@
           <label>Kategori</label>
           <select id="input-category"></select>
         </div>
+        
+        <!-- Custom Dropdown Sub Kategori (Bebas dari Picker Native Chrome) -->
         <div class="input-group w-50" id="field-sub-category" style="display: none;">
           <label>Sub Kategori</label>
-          <select id="input-sub-category"></select>
+          <div class="custom-dropdown" id="dropdown-sub-category">
+            <div class="dropdown-trigger" id="sub-category-trigger">
+              <span id="sub-category-label">Pilih Sub Kategori</span>
+              <i class="ph ph-caret-down dropdown-arrow"></i>
+            </div>
+            <div class="dropdown-menu" id="sub-category-options"></div>
+            <input type="hidden" id="input-sub-category-val">
+          </div>
         </div>
       </div>
 
@@ -176,11 +187,11 @@
       <div class="settings-form">
         <div class="input-group">
           <label>Nama Kategori Utama</label>
-          <input type="text" id="set-cat-name" placeholder="Misal: Proyek Pribadi">
+          <input type="text" id="set-cat-name" placeholder="Misal: Organisasi">
         </div>
         <div class="input-group">
           <label>Sub Kategori (Pisahkan dgn Koma)</label>
-          <input type="text" id="set-sub-cat" placeholder="Misal: Desain, Coding">
+          <input type="text" id="set-sub-cat" placeholder="Misal: PMR, OSIS, ROHIS">
         </div>
 
         <div class="input-group">
