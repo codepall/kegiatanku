@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel | Kelola User</title>
+  <title>MySchedule | Admin Panel</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
     .admin-wrapper {
-      max-width: 800px;
+      max-width: 820px;
       margin: 40px auto;
       padding: 0 16px;
     }
@@ -25,7 +25,7 @@
       font-size: 13px;
     }
     .user-table th, .user-table td {
-      padding: 12px 14px;
+      padding: 12px 10px;
       text-align: left;
       border-bottom: 1px solid var(--sage-light);
     }
@@ -40,6 +40,28 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 24px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .status-badge {
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .status-active {
+      background: rgba(138, 158, 134, 0.2);
+      color: var(--sage-dark);
+    }
+    .status-blocked {
+      background: #ffecec;
+      color: #d9534f;
+    }
+    .action-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
     }
   </style>
 </head>
@@ -50,11 +72,11 @@
     <div class="login-card glass-panel" style="max-width: 360px; width: 100%;">
       <i class="ph ph-shield-check" style="font-size: 40px; color: var(--sage-dark); margin-bottom: 8px;"></i>
       <h2 style="color: var(--sage-dark); font-size: 20px; margin-bottom: 4px;">Admin Portal</h2>
-      <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 20px;">Login khusus pemilik untuk mengelola akun.</p>
+      <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 20px;">Login khusus Super Admin untuk mengelola akun.</p>
       
       <div class="input-group">
-        <label>Email Admin</label>
-        <input type="email" id="admin-email" placeholder="admin@jadwal.com" required>
+        <label>Email Super Admin</label>
+        <input type="email" id="admin-email" placeholder="superadmin@codepall.com" required>
       </div>
       <div class="input-group">
         <label>Password Admin</label>
@@ -70,7 +92,7 @@
     <div class="admin-header">
       <div>
         <h2 style="color: var(--text-main);"><i class="ph ph-users-three"></i> Pengelolaan Akun Pengguna</h2>
-        <p style="font-size: 12px; color: var(--text-muted);">Buat akun baru langsung ke sistem autentikasi.</p>
+        <p style="font-size: 12px; color: var(--text-muted);">Tambah, blokir, atau hapus permanen akun dari server Firebase Auth secara real-time.</p>
       </div>
       <div style="display: flex; gap: 8px;">
         <a href="index.html" class="btn-secondary" style="text-decoration: none; font-size: 12px; padding: 8px 14px;">Buka Web</a>
@@ -78,38 +100,39 @@
       </div>
     </div>
 
-    <!-- Form Buat Akun Baru -->
+    <!-- Form Buat / Tautkan Akun -->
     <div class="admin-card glass-panel">
-      <h4 style="color: var(--sage-dark); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;"><i class="ph ph-user-plus"></i> Tambah Pengguna Baru</h4>
+      <h4 style="color: var(--sage-dark); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;"><i class="ph ph-user-plus"></i> Tambah / Tautkan Pengguna</h4>
       <div class="form-row">
         <div class="input-group w-50">
-          <label>Email Akun Baru</label>
+          <label>Email Akun</label>
           <input type="email" id="new-user-email" placeholder="user@contoh.com" required>
         </div>
         <div class="input-group w-50">
-          <label>Password Sementara (Min. 6 Karakter)</label>
+          <label>Password Akun (Min. 6 Karakter)</label>
           <input type="text" id="new-user-password" placeholder="Password akun" required>
         </div>
       </div>
       <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
-        <button id="btn-create-user" class="btn-primary"><i class="ph ph-plus-circle"></i> Buat Akun Sekarang</button>
+        <button id="btn-create-user" class="btn-primary"><i class="ph ph-plus-circle"></i> Simpan & Daftarkan Akun</button>
       </div>
       <p id="create-user-status" style="font-size: 12px; margin-top: 8px; font-weight: 500;"></p>
     </div>
 
-    <!-- Daftar Akun yang Telah Dibuat -->
-    <div class="admin-card glass-panel">
-      <h4 style="color: var(--sage-dark); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;"><i class="ph ph-list-checks"></i> Daftar Akun Terdaftar</h4>
+    <!-- Daftar Akun Terdaftar -->
+    <div class="admin-card glass-panel" style="overflow-x: auto;">
+      <h4 style="color: var(--sage-dark); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;"><i class="ph ph-list-checks"></i> Daftar Akun Terkelola</h4>
       <table class="user-table">
         <thead>
           <tr>
             <th>Email</th>
-            <th>Tanggal Dibuat</th>
-            <th>Aksi</th>
+            <th>Status</th>
+            <th>Tanggal</th>
+            <th>Kontrol Akun (Real-Time)</th>
           </tr>
         </thead>
         <tbody id="user-table-body">
-          <tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Memuat daftar pengguna...</td></tr>
+          <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Memuat daftar pengguna...</td></tr>
         </tbody>
       </table>
     </div>
