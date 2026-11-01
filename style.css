@@ -91,21 +91,41 @@ select {
 
 .layout { height: 100vh; width: 100vw; display: flex; position: relative; }
 
+/* STRUKTUR SIDEBAR KOKOH DENGAN TINGGI PRESISI */
 .sidebar { 
-  width: 250px; padding: 24px 12px; display: flex; flex-direction: column; flex-shrink: 0;
-  transition: width 0.6s var(--ease-smooth); border-right: 1px solid var(--glass-border); 
-  position: relative; z-index: 100; overflow: hidden; white-space: nowrap; 
+  width: 250px; 
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  padding: 24px 12px 16px 12px; 
+  display: flex; 
+  flex-direction: column; 
+  flex-shrink: 0;
+  transition: width 0.6s var(--ease-smooth); 
+  border-right: 1px solid var(--glass-border); 
+  position: relative; 
+  z-index: 100; 
+  overflow: hidden; 
+  white-space: nowrap; 
 }
 .sidebar.minimized { width: 72px; }
 .sidebar::-webkit-scrollbar, .nav-links::-webkit-scrollbar { display: none; }
 .sidebar, .nav-links { -ms-overflow-style: none; scrollbar-width: none; }
 
-.sidebar-header { display: flex; justify-content: flex-start; align-items: center; gap: 16px; padding: 0 8px; margin-bottom: 32px; transition: padding 0.6s var(--ease-smooth); }
+.sidebar-header { display: flex; justify-content: flex-start; align-items: center; gap: 16px; padding: 0 8px; margin-bottom: 24px; flex-shrink: 0; }
 .btn-icon { background: transparent; border: none; font-size: 24px; min-width: 24px; height: 24px; color: var(--sage-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.6s var(--ease-smooth); }
 .sidebar.minimized .btn-icon { transform: rotate(0deg); }
 .sidebar:not(.minimized) .btn-icon { transform: rotate(180deg); }
 
-.nav-links { list-style: none; flex-grow: 1; overflow-y: auto; overflow-x: hidden; width: 100%; }
+/* DAFTAR NAV MENGALAMI SCROLL INTERNAL (Mencegah tombol logout terdorong ke bawah) */
+.nav-links { 
+  list-style: none; 
+  flex: 1 1 0%; 
+  min-height: 0; 
+  overflow-y: auto; 
+  overflow-x: hidden; 
+  width: 100%; 
+}
 .nav-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; padding: 12px 12px 4px 16px; font-weight: 600; }
 
 .nav-item { 
@@ -124,12 +144,14 @@ select {
 .sidebar-text { font-weight: 600; opacity: 1; transition: opacity 0.3s var(--ease-smooth); }
 .sidebar.minimized .sidebar-text { opacity: 0; pointer-events: none; }
 
-/* USER PROFILE & EXPLICIT LOGOUT BUTTON */
+/* PROFIL USER & TOMBOL LOGOUT TERKUNCI SELALU TERLIHAT */
 .user-profile { 
+  flex-shrink: 0;
   display: flex; 
   flex-direction: column; 
   gap: 10px; 
-  padding: 16px 8px 4px 8px; 
+  padding: 14px 6px 4px 6px; 
+  margin-top: auto;
   border-top: 1px solid var(--glass-border); 
 }
 .user-profile-row { display: flex; align-items: center; }
@@ -142,11 +164,11 @@ select {
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 8px 12px;
+  padding: 9px 12px;
   border-radius: 8px;
-  background: rgba(217, 83, 79, 0.1);
+  background: rgba(217, 83, 79, 0.12);
   color: #d9534f;
-  border: 1px solid rgba(217, 83, 79, 0.25);
+  border: 1px solid rgba(217, 83, 79, 0.3);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -158,7 +180,7 @@ select {
 }
 .sidebar.minimized .btn-sidebar-logout {
   justify-content: center;
-  padding: 8px 0;
+  padding: 9px 0;
 }
 .sidebar.minimized .btn-sidebar-logout i {
   font-size: 18px;
@@ -332,7 +354,19 @@ textarea { resize: vertical; }
 /* MOBILE RESPONSIVE UI */
 @media (max-width: 768px) {
   body { font-size: 12px; }
-  .sidebar { position: fixed; top: 0; left: 0; height: 100vh; box-shadow: 4px 0 20px rgba(0,0,0,0.15); }
+  
+  /* LOCK TINGGI SIDEBAR DI HP MENGGUNAKAN DVH */
+  .sidebar { 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    height: 100vh; 
+    height: 100dvh;
+    max-height: 100dvh;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    box-shadow: 4px 0 20px rgba(0,0,0,0.15); 
+  }
+  
   .content { margin-left: 72px; width: calc(100vw - 72px); padding: 16px; height: 100vh; overflow-y: auto;}
   .content-wrapper { padding-bottom: 80px; }
 
