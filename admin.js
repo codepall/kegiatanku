@@ -3,8 +3,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, creat
 import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // ============================================================================
-// PENGATURAN EMAIL SUPER ADMIN
-// Ganti email di bawah ini dengan email khusus yang kamu buat di Firebase Console!
+// Ganti email di bawah ini dengan email Super Admin yang baru kamu buat!
 // ============================================================================
 const SUPER_ADMIN_EMAIL = "superadmin@codepall.com";
 
@@ -17,16 +16,19 @@ const firebaseConfig = {
   appId: "1:603325028994:web:b6b123f304d8a69d32b29b"
 };
 
-// Instance Utama khusus Admin
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Instance KHUSUS Admin agar tidak terjadi tabrakan login dengan tab Aplikasi Utama
+const adminApp = initializeApp(firebaseConfig, "AdminPortalApp");
+const auth = getAuth(adminApp);
 
-// Instance Kedua khusus pendaftaran akun baru agar Admin TIDAK logout saat membuat user
+// Instance Default untuk mengakses database (Firestore)
+const defaultApp = initializeApp(firebaseConfig);
+const db = getFirestore(defaultApp);
+
+// Instance Ketiga khusus untuk membuat user baru di latar belakang tanpa menimpa login saat ini
 const secondaryApp = initializeApp(firebaseConfig, "secondaryAuthApp");
 const secondaryAuth = getAuth(secondaryApp);
 
-// FILTER OTENTIKASI SUPER ADMIN (Mencegah akun biasa membuka admin)
+
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     if (user.email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
@@ -46,7 +48,6 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// Login Admin Khusus
 document.getElementById('btn-admin-login').addEventListener('click', async () => {
   const email = document.getElementById('admin-email').value.trim();
   const password = document.getElementById('admin-password').value;
@@ -65,12 +66,11 @@ document.getElementById('btn-admin-login').addEventListener('click', async () =>
   }
 });
 
-// Logout Admin
 document.getElementById('btn-admin-logout').addEventListener('click', () => {
   signOut(auth);
 });
 
-// Buat User Baru ATAU Tambahkan Akun Lama ke Tabel Kelola
+
 document.getElementById('btn-create-user').addEventListener('click', async () => {
   const emailInput = document.getElementById('new-user-email');
   const passwordInput = document.getElementById('new-user-password');
@@ -85,7 +85,6 @@ document.getElementById('btn-create-user').addEventListener('click', async () =>
     statusEl.style.color = "#d9534f";
     return;
   }
-
   if (password.length < 6) {
     statusEl.textContent = "Password minimal 6 karakter!";
     statusEl.style.color = "#d9534f";
@@ -101,12 +100,10 @@ document.getElementById('btn-create-user').addEventListener('click', async () =>
     let isExistingAccount = false;
 
     try {
-      // 1. Coba daftarkan akun baru ke Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
       createdUid = userCredential.user.uid;
       await signOut(secondaryAuth);
     } catch (authError) {
-      // Jika akun sudah ada sebelumnya (seperti akun utama yang sudah dibuat lama)
       if (authError.code === 'auth/email-already-in-use') {
         isExistingAccount = true;
       } else {
@@ -114,7 +111,6 @@ document.getElementById('btn-create-user').addEventListener('click', async () =>
       }
     }
 
-    // 2. Periksa apakah email sudah tercatat di Firestore
     const existingCheck = await getDocs(query(collection(db, "managed_users"), where("email", "==", email)));
     if (!existingCheck.empty) {
       statusEl.textContent = `Akun ${email} sudah ada di dalam tabel kelola!`;
@@ -122,7 +118,6 @@ document.getElementById('btn-create-user').addEventListener('click', async () =>
       return;
     }
 
-    // 3. Masukkan ke koleksi managed_users agar bisa dikelola di tabel
     await addDoc(collection(db, "managed_users"), {
       uid: createdUid || "existing-user",
       email: email,
@@ -147,7 +142,6 @@ document.getElementById('btn-create-user').addEventListener('click', async () =>
   }
 });
 
-// Memuat Realtime Daftar Pengguna
 function loadManagedUsers() {
   const tbody = document.getElementById('user-table-body');
   onSnapshot(collection(db, "managed_users"), (snapshot) => {
