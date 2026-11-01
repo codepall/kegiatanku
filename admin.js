@@ -1,6 +1,12 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// ============================================================================
+// PENGATURAN EMAIL SUPER ADMIN
+// Ganti email di bawah ini dengan email khusus yang kamu buat di Firebase Console!
+// ============================================================================
+const SUPER_ADMIN_EMAIL = "superadmin@codepall.com";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDPsRwRf72xaQkSdGn89WdwA3sbJI2Z-z0",
@@ -11,18 +17,26 @@ const firebaseConfig = {
   appId: "1:603325028994:web:b6b123f304d8a69d32b29b"
 };
 
-// Instance Utama untuk Admin
+// Instance Utama khusus Admin
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Instance Kedua khusus pendaftaran akun baru agar Admin TIDAK logout otomatis
+// Instance Kedua khusus pendaftaran akun baru agar Admin TIDAK logout saat membuat user
 const secondaryApp = initializeApp(firebaseConfig, "secondaryAuthApp");
 const secondaryAuth = getAuth(secondaryApp);
 
-// Otentikasi Admin Gate
-onAuthStateChanged(auth, (user) => {
+// FILTER OTENTIKASI SUPER ADMIN (Mencegah akun biasa membuka admin)
+onAuthStateChanged(auth, async (user) => {
   if (user) {
+    if (user.email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
+      const errEl = document.getElementById('admin-login-error');
+      errEl.textContent = "Akses ditolak! Akun ini bukan akun Super Admin.";
+      await signOut(auth);
+      document.getElementById('admin-login-screen').style.display = 'flex';
+      document.getElementById('admin-panel-screen').style.display = 'none';
+      return;
+    }
     document.getElementById('admin-login-screen').style.display = 'none';
     document.getElementById('admin-panel-screen').style.display = 'block';
     loadManagedUsers();
@@ -32,17 +46,22 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// Login Admin
+// Login Admin Khusus
 document.getElementById('btn-admin-login').addEventListener('click', async () => {
   const email = document.getElementById('admin-email').value.trim();
   const password = document.getElementById('admin-password').value;
   const errEl = document.getElementById('admin-login-error');
   errEl.textContent = "";
 
+  if (email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
+    errEl.textContent = "Akses ditolak! Hanya email Super Admin yang diizinkan masuk.";
+    return;
+  }
+
   try {
     await signInWithEmailAndPassword(auth, email, password);
   } catch (error) {
-    errEl.textContent = "Login Admin Gagal: Periksa email dan password.";
+    errEl.textContent = "Login Gagal: Password salah atau akun belum dibuat di Firebase Console.";
   }
 });
 
@@ -51,7 +70,7 @@ document.getElementById('btn-admin-logout').addEventListener('click', () => {
   signOut(auth);
 });
 
-// Buat User Baru Tanpa Membuka Database
+// Buat User Baru ATAU Tambahkan Akun Lama ke Tabel Kelola
 document.getElementById('btn-create-user').addEventListener('click', async () => {
   const emailInput = document.getElementById('new-user-email');
   const passwordInput = document.getElementById('new-user-password');
@@ -62,7 +81,7 @@ document.getElementById('btn-create-user').addEventListener('click', async () =>
   const password = passwordInput.value.trim();
 
   if (!email || !password) {
-    statusEl.textContent = "Harap isi email dan password baru!";
+    statusEl.textContent = "Harap isi email dan password!";
     statusEl.style.color = "#d9534f";
     return;
   }
@@ -74,25 +93,47 @@ document.getElementById('btn-create-user').addEventListener('click', async () =>
   }
 
   btn.disabled = true;
-  btn.textContent = "Mendaftarkan...";
+  btn.textContent = "Memproses...";
   statusEl.textContent = "";
 
   try {
-    // 1. Buat User di Firebase Auth menggunakan instance sekunder
-    const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
-    const newUser = userCredential.user;
-    
-    // Segera logout dari instance sekunder
-    await signOut(secondaryAuth);
+    let createdUid = "";
+    let isExistingAccount = false;
 
-    // 2. Simpan identitas ke Firestore collection 'managed_users' untuk daftar pantauan
+    try {
+      // 1. Coba daftarkan akun baru ke Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+      createdUid = userCredential.user.uid;
+      await signOut(secondaryAuth);
+    } catch (authError) {
+      // Jika akun sudah ada sebelumnya (seperti akun utama yang sudah dibuat lama)
+      if (authError.code === 'auth/email-already-in-use') {
+        isExistingAccount = true;
+      } else {
+        throw authError;
+      }
+    }
+
+    // 2. Periksa apakah email sudah tercatat di Firestore
+    const existingCheck = await getDocs(query(collection(db, "managed_users"), where("email", "==", email)));
+    if (!existingCheck.empty) {
+      statusEl.textContent = `Akun ${email} sudah ada di dalam tabel kelola!`;
+      statusEl.style.color = "var(--sage-dark)";
+      return;
+    }
+
+    // 3. Masukkan ke koleksi managed_users agar bisa dikelola di tabel
     await addDoc(collection(db, "managed_users"), {
-      uid: newUser.uid,
+      uid: createdUid || "existing-user",
       email: email,
       createdAt: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
     });
 
-    statusEl.textContent = `Akun ${email} berhasil dibuat! User sekarang sudah bisa login.`;
+    if (isExistingAccount) {
+      statusEl.textContent = `Akun lama (${email}) berhasil ditautkan ke tabel kelola!`;
+    } else {
+      statusEl.textContent = `Akun baru (${email}) berhasil dibuat dan siap digunakan!`;
+    }
     statusEl.style.color = "var(--sage-dark)";
     emailInput.value = "";
     passwordInput.value = "";
@@ -106,13 +147,13 @@ document.getElementById('btn-create-user').addEventListener('click', async () =>
   }
 });
 
-// Memuat Daftar Pengguna Terpantau Realtime
+// Memuat Realtime Daftar Pengguna
 function loadManagedUsers() {
   const tbody = document.getElementById('user-table-body');
   onSnapshot(collection(db, "managed_users"), (snapshot) => {
     tbody.innerHTML = '';
     if (snapshot.empty) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Belum ada user yang ditambahkan melalui panel ini.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Belum ada user yang ditambahkan ke panel ini.</td></tr>';
       return;
     }
 
@@ -124,13 +165,13 @@ function loadManagedUsers() {
         <td>${u.createdAt || '-'}</td>
         <td>
           <button class="btn-del-record" data-id="${docSnap.id}" style="background: #ffecec; border: 1px solid #ffdcdc; color: #d9534f; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 11px;">
-            Hapus Catatan
+            Hapus dari Tabel
           </button>
         </td>
       `;
 
       tr.querySelector('.btn-del-record').addEventListener('click', async () => {
-        if (confirm(`Hapus catatan untuk ${u.email}?`)) {
+        if (confirm(`Hapus catatan kelola untuk ${u.email}?`)) {
           await deleteDoc(doc(db, "managed_users", docSnap.id));
         }
       });
