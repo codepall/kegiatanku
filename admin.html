@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel | Kelola User</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    .admin-wrapper {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    .admin-card {
+      padding: 28px;
+      border-radius: 16px;
+      margin-bottom: 24px;
+    }
+    .user-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      font-size: 13px;
+    }
+    .user-table th, .user-table td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--sage-light);
+    }
+    .user-table th {
+      color: var(--sage-dark);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body style="overflow: auto;">
+
+  <!-- Layar Login Admin Khusus -->
+  <div id="admin-login-screen" style="display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px;">
+    <div class="login-card glass-panel" style="max-width: 360px; width: 100%;">
+      <i class="ph ph-shield-check" style="font-size: 40px; color: var(--sage-dark); margin-bottom: 8px;"></i>
+      <h2 style="color: var(--sage-dark); font-size: 20px; margin-bottom: 4px;">Admin Portal</h2>
+      <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 20px;">Login khusus pemilik untuk mengelola akun.</p>
+      
+      <div class="input-group">
+        <label>Email Admin</label>
+        <input type="email" id="admin-email" placeholder="admin@jadwal.com" required>
+      </div>
+      <div class="input-group">
+        <label>Password Admin</label>
+        <input type="password" id="admin-password" placeholder="Password Admin" required>
+      </div>
+      <button id="btn-admin-login" class="btn-primary" style="width: 100%; margin-top: 8px;">Masuk Admin</button>
+      <p id="admin-login-error" style="color: #d9534f; font-size: 11px; margin-top: 10px;"></p>
+    </div>
+  </div>
+
+  <!-- Dashboard Admin Kelola User -->
+  <div id="admin-panel-screen" class="admin-wrapper" style="display: none;">
+    <div class="admin-header">
+      <div>
+        <h2 style="color: var(--text-main);"><i class="ph ph-users-three"></i> Pengelolaan Akun Pengguna</h2>
+        <p style="font-size: 12px; color: var(--text-muted);">Buat akun baru langsung ke sistem autentikasi.</p>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <a href="index.html" class="btn-secondary" style="text-decoration: none; font-size: 12px; padding: 8px 14px;">Buka Web</a>
+        <button id="btn-admin-logout" class="btn-secondary" style="color: #d9534f; border-color: #d9534f; font-size: 12px; padding: 8px 14px;"><i class="ph ph-sign-out"></i> Logout Admin</button>
+      </div>
+    </div>
+
+    <!-- Form Buat Akun Baru -->
+    <div class="admin-card glass-panel">
+      <h4 style="color: var(--sage-dark); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;"><i class="ph ph-user-plus"></i> Tambah Pengguna Baru</h4>
+      <div class="form-row">
+        <div class="input-group w-50">
+          <label>Email Akun Baru</label>
+          <input type="email" id="new-user-email" placeholder="user@contoh.com" required>
+        </div>
+        <div class="input-group w-50">
+          <label>Password Sementara (Min. 6 Karakter)</label>
+          <input type="text" id="new-user-password" placeholder="Password akun" required>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+        <button id="btn-create-user" class="btn-primary"><i class="ph ph-plus-circle"></i> Buat Akun Sekarang</button>
+      </div>
+      <p id="create-user-status" style="font-size: 12px; margin-top: 8px; font-weight: 500;"></p>
+    </div>
+
+    <!-- Daftar Akun yang Telah Dibuat -->
+    <div class="admin-card glass-panel">
+      <h4 style="color: var(--sage-dark); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;"><i class="ph ph-list-checks"></i> Daftar Akun Terdaftar</h4>
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Tanggal Dibuat</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="user-table-body">
+          <tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Memuat daftar pengguna...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module" src="admin.js"></script>
+</body>
+</html>
