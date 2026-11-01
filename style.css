@@ -1,274 +1,243 @@
-:root {
-  --bg-main: #eef1ec;
-  --sage-primary: #8a9e86;
-  --sage-dark: #6b7d68;
-  --sage-light: #c5d0c2;
-  --text-main: #2d362a;
-  --text-muted: #6e7a6b;
-  --white: #ffffff;
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.5);
-  --shadow: 0 8px 32px rgba(107, 125, 104, 0.12);
-  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
-}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jadwal | Premium Sage</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
 
-/* Menghilangkan highlight kotak biru saat layar HP disentuh */
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
-/* Menghilangkan garis biru outline saat elemen diklik/difokuskan */
-*:focus { outline: none !important; }
+  <div id="app-screen" class="screen layout active">
+    
+    <aside class="sidebar glass-panel" id="sidebar">
+      <div class="sidebar-header">
+        <button id="btn-toggle-sidebar" class="btn-icon"><i class="ph ph-list"></i></button>
+        <h2 class="sidebar-text">JadwalKu</h2>
+      </div>
+      
+      <ul class="nav-links" id="sidebar-nav">
+        <li class="nav-item" id="btn-open-dashboard" data-filter="dashboard">
+          <div class="nav-item-left"><i class="ph ph-chart-pie-slice"></i> <span class="sidebar-text">Dashboard</span></div>
+        </li>
+        <li class="nav-label sidebar-text">Status</li>
+        <li class="nav-item active" data-filter="status" data-value="all">
+          <div class="nav-item-left"><i class="ph ph-files"></i> <span class="sidebar-text">Semua</span></div>
+          <span class="nav-counter" id="count-all">0</span>
+        </li>
+        <li class="nav-item" data-filter="status" data-value="pending">
+          <div class="nav-item-left"><i class="ph ph-clock"></i> <span class="sidebar-text">Belum</span></div>
+          <span class="nav-counter" id="count-pending">0</span>
+        </li>
+        <li class="nav-item" data-filter="status" data-value="completed">
+          <div class="nav-item-left"><i class="ph ph-check-circle"></i> <span class="sidebar-text">Selesai</span></div>
+          <span class="nav-counter" id="count-completed">0</span>
+        </li>
+        
+        <li class="nav-label sidebar-text" style="margin-top:12px;">Kategori</li>
+        <div id="dynamic-categories-sidebar"></div>
 
-body { background-color: var(--bg-main); background-image: radial-gradient(circle at top right, #f8faf7, #eef1ec); color: var(--text-main); overflow: hidden; }
+        <li class="nav-label sidebar-text" style="margin-top:12px;">Opsi</li>
+        <li class="nav-item" id="btn-open-schedule">
+          <div class="nav-item-left"><i class="ph ph-calendar-plus"></i> <span class="sidebar-text">Atur Jadwal</span></div>
+        </li>
+        <li class="nav-item" id="btn-open-settings">
+          <div class="nav-item-left"><i class="ph ph-gear"></i> <span class="sidebar-text">Atur Kategori</span></div>
+        </li>
+      </ul>
 
-.glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: var(--shadow); }
-.screen { display: none; }
-.screen.active { display: flex; }
+      <!-- Profil & Tombol Log Out Jelas -->
+      <div class="user-profile">
+        <div class="user-profile-row">
+          <img id="user-avatar" src="" alt="Avatar">
+          <div class="user-info sidebar-text">
+            <span id="user-name">Pengguna</span>
+            <span style="font-size: 10px; color: var(--text-muted);">Online</span>
+          </div>
+        </div>
+        <button id="btn-logout" class="btn-sidebar-logout" title="Keluar Akun">
+          <i class="ph ph-sign-out"></i>
+          <span class="sidebar-text">Log Out</span>
+        </button>
+      </div>
+    </aside>
 
-.input-group { display: flex; flex-direction: column; margin-bottom: 12px; }
-.input-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-.input-group input, .input-group select { padding: 10px; border: 1px solid var(--sage-light); border-radius: 8px; font-size: 13px; outline: none; background: rgba(255,255,255,0.8); transition: border 0.2s; }
-.input-group input:focus, .input-group select:focus { border-color: var(--sage-primary); }
-.w-50 { width: 50%; }
-.w-100 { width: 100%; }
-.form-row { display: flex; gap: 12px; width: 100%; }
+    <main class="content">
+      <div class="content-wrapper">
+        <header class="main-header" id="main-header">
+          <div class="header-titles">
+            <h1 id="greeting">Halo!</h1>
+            <p id="header-subtitle">Berikut adalah jadwalmu hari ini.</p>
+          </div>
+          <div class="header-actions">
+            <input type="text" id="search-text-input" class="search-input" placeholder="Cari tag, nama, catatan..." title="Cari kegiatan / tag">
+            <input type="date" id="search-date-input" class="search-date" title="Cari berdasarkan tanggal">
+            <button id="btn-add-task" class="btn-primary">+ Kegiatan</button>
+          </div>
+        </header>
+        
+        <div class="task-container" id="task-list"></div>
+        <div id="dashboard-view" style="display: none;"></div>
+      </div>
+    </main>
+  </div>
 
-.login-card { padding: 32px; border-radius: 20px; text-align: center; width: 100%; max-width: 320px; }
-.login-card h1 { color: var(--sage-dark); font-size: 24px; margin-bottom: 4px; }
-.login-card p { color: var(--text-muted); font-size: 13px; margin-bottom: 24px; }
-.login-actions { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
-#login-error { color: #d9534f; font-size: 11px; margin-top: 10px; min-height: 16px; }
+  <!-- Modal Tambah / Edit Kegiatan -->
+  <div id="modal" class="modal">
+    <div class="modal-content glass-panel" style="max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h3 id="modal-form-title">Buat Kegiatan Baru</h3>
+        <button class="btn-close-modal"><i class="ph ph-x"></i></button>
+      </div>
+      
+      <div class="input-group">
+        <label>Judul Kegiatan</label>
+        <input type="text" id="input-title" placeholder="Contoh: Rapat PMR" required>
+      </div>
 
-/* Overlay Sidebar */
-.sidebar-overlay { 
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
-  background: rgba(45, 54, 42, 0.1); backdrop-filter: blur(4px); 
-  z-index: 90; opacity: 0; visibility: hidden; transition: opacity 0.5s var(--ease-smooth), visibility 0.5s var(--ease-smooth); 
-}
-.sidebar-overlay.active { opacity: 1; visibility: visible; }
+      <div class="form-row">
+        <div class="input-group w-50">
+          <label>Kategori</label>
+          <select id="input-category"></select>
+        </div>
+        
+        <!-- Custom Dropdown Sub Kategori (Bebas dari Picker Native Chrome) -->
+        <div class="input-group w-50" id="field-sub-category" style="display: none;">
+          <label>Sub Kategori</label>
+          <div class="custom-dropdown" id="dropdown-sub-category">
+            <div class="dropdown-trigger" id="sub-category-trigger">
+              <span id="sub-category-label">Pilih Sub Kategori</span>
+              <i class="ph ph-caret-down dropdown-arrow"></i>
+            </div>
+            <div class="dropdown-menu" id="sub-category-options"></div>
+            <input type="hidden" id="input-sub-category-val">
+          </div>
+        </div>
+      </div>
 
-/* Menyembunyikan blur overlay pada mode desktop */
-@media (min-width: 769px) {
-  .sidebar-overlay { display: none !important; }
-}
+      <div class="input-group" id="field-default-date" style="display: none;">
+        <label>Tanggal Kegiatan</label>
+        <input type="date" id="val-default-date">
+      </div>
 
-.layout { height: 100vh; width: 100vw; display: flex; position: relative; }
+      <div class="form-row" id="field-long-date" style="display: none;">
+        <div class="input-group w-50"><label>Tgl Mulai</label><input type="date" id="val-date-start"></div>
+        <div class="input-group w-50"><label>Tgl Selesai</label><input type="date" id="val-date-end"></div>
+      </div>
 
-/* Sidebar & Scroller disembunyikan */
-.sidebar { 
-  width: 250px; padding: 24px 12px; display: flex; flex-direction: column; flex-shrink: 0;
-  transition: width 0.6s var(--ease-smooth); border-right: 1px solid var(--glass-border); 
-  position: relative; z-index: 100; overflow: hidden; white-space: nowrap; 
-}
-.sidebar.minimized { width: 72px; }
-.sidebar::-webkit-scrollbar, .nav-links::-webkit-scrollbar { display: none; }
-.sidebar, .nav-links { -ms-overflow-style: none; scrollbar-width: none; }
+      <div class="input-group" id="field-pr-deadline-type" style="display: none;">
+        <label>Waktu Tenggat (Deadline)</label>
+        <select id="val-pr-deadline-type">
+          <option value="khusus">Pilih Tanggal Khusus</option>
+          <option value="besok">Besok</option>
+          <option value="next_meeting">Pertemuan Selanjutnya</option>
+        </select>
+      </div>
 
-/* Mengembalikan jarak proporsional awal untuk Sidebar Header */
-.sidebar-header { display: flex; justify-content: flex-start; align-items: center; gap: 16px; padding: 0 8px; margin-bottom: 32px; transition: padding 0.6s var(--ease-smooth); }
-.btn-icon { background: transparent; border: none; font-size: 24px; min-width: 24px; height: 24px; color: var(--sage-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.6s var(--ease-smooth); }
-.sidebar.minimized .btn-icon { transform: rotate(0deg); }
-.sidebar:not(.minimized) .btn-icon { transform: rotate(180deg); }
+      <div class="input-group" id="field-deadline" style="display: none;">
+        <label>Tanggal Deadline</label>
+        <input type="date" id="val-date-deadline">
+      </div>
 
-.nav-links { list-style: none; flex-grow: 1; overflow-y: auto; overflow-x: hidden; width: 100%; }
-.nav-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; padding: 12px 12px 4px 16px; font-weight: 600; }
+      <div class="form-row" id="field-time-range" style="display: none;">
+        <div class="input-group w-50"><label>Jam Mulai</label><input type="time" id="val-time-start"></div>
+        <div class="input-group w-50"><label>Jam Selesai</label><input type="time" id="val-time-end"></div>
+      </div>
 
-.nav-item { 
-  display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 12px; margin-bottom: 4px; 
-  color: var(--text-muted); cursor: pointer; transition: background-color 0.2s, color 0.2s; 
-  font-size: 13px; font-weight: 500; 
-}
-.nav-item-left { display: flex; align-items: center; gap: 12px; flex-grow: 1; }
-.nav-item i { font-size: 24px; min-width: 24px; height: 24px; text-align: center; color: var(--sage-dark); transition: color 0.2s; }
-.nav-item.active, .nav-item:hover { background-color: rgba(197, 208, 194, 0.5); color: var(--sage-dark); }
-.nav-item.active i { color: var(--sage-primary); }
+      <div class="form-row" id="field-start-time-row" style="display: none;">
+        <div class="input-group" id="field-start-time" style="display: none;">
+          <label>Jam Mulai</label>
+          <input type="time" id="val-time-only">
+        </div>
+        <div class="input-group" id="field-routine" style="display: none;">
+          <label>Pengulangan (Rutinitas)</label>
+          <select id="val-routine-type">
+            <option value="">Tidak (Hanya Sekali)</option>
+            <option value="Harian">Harian</option>
+            <option value="Mingguan">Mingguan</option>
+            <option value="Bulanan">Bulanan</option>
+            <option value="Tahunan">Tahunan</option>
+          </select>
+        </div>
+      </div>
 
-.nav-counter { background: rgba(138, 158, 134, 0.2); color: var(--sage-dark); padding: 2px 6px; border-radius: 8px; font-size: 10px; font-weight: 600; transition: opacity 0.3s var(--ease-smooth); }
-.sidebar.minimized .nav-counter { opacity: 0; pointer-events: none; display: none; }
+      <div class="input-group">
+        <label>Catatan (Opsional)</label>
+        <textarea id="input-notes" rows="2" placeholder="Tulis catatan tambahan di sini..."></textarea>
+      </div>
 
-.sidebar-text { font-weight: 600; opacity: 1; transition: opacity 0.3s var(--ease-smooth); }
-.sidebar.minimized .sidebar-text { opacity: 0; pointer-events: none; }
+      <div class="modal-actions" style="margin-top: 12px;">
+        <button id="btn-save" class="btn-primary" style="width: 100%;">Simpan Kegiatan</button>
+      </div>
+    </div>
+  </div>
 
-.user-profile { display: flex; align-items: center; padding: 20px 10px 0 10px; border-top: 1px solid var(--glass-border); }
-.user-profile img { width: 28px; height: 28px; min-width: 28px; border-radius: 50%; } 
-.user-info { display: flex; flex-direction: column; margin-left: 12px; }
+  <!-- Modal Pengaturan Kategori -->
+  <div id="modal-settings" class="modal">
+    <div class="modal-content glass-panel" style="max-height: 85vh; overflow-y: auto; max-width: 460px;">
+      <div class="modal-header">
+        <h3>Pengaturan Kategori</h3>
+        <button class="btn-close-modal"><i class="ph ph-x"></i></button>
+      </div>
+      
+      <div class="settings-form">
+        <div class="input-group">
+          <label>Nama Kategori Utama</label>
+          <input type="text" id="set-cat-name" placeholder="Misal: Organisasi">
+        </div>
+        <div class="input-group">
+          <label>Sub Kategori (Pisahkan dgn Koma)</label>
+          <input type="text" id="set-sub-cat" placeholder="Misal: PMR, OSIS, ROHIS">
+        </div>
 
-/* KONTEN UTAMA: Dikembalikan ke padding awal agar tidak rusak */
-.content { flex-grow: 1; padding: 32px; overflow-y: auto; position: relative; z-index: 1; }
-.content-wrapper { width: 100%; max-width: 760px; margin: 0 auto; padding-bottom: 20px; }
+        <div class="input-group">
+          <label>Pilih Ikon</label>
+          <div class="icon-grid" id="icon-picker"></div>
+          <input type="hidden" id="set-cat-icon" value="ph-folder">
+        </div>
 
-/* MAIN HEADER: Dikembalikan proporsional, tidak memaksakan tinggi */
-.main-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; }
-.header-titles h1 { font-size: 24px; color: var(--text-main); margin-bottom: 4px; }
-.header-titles p { color: var(--text-muted); font-size: 13px; }
-.header-actions { display: flex; align-items: center; gap: 12px; }
+        <label style="font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; display: block;">Aktifkan Opsi Input:</label>
+        <div class="checkbox-grid">
+          <label class="chk-label"><input type="checkbox" id="chk-longdate"> Tgl Panjang</label>
+          <label class="chk-label"><input type="checkbox" id="chk-timerange"> Lama Waktu</label>
+          <label class="chk-label"><input type="checkbox" id="chk-deadline"> Deadline</label>
+          <label class="chk-label"><input type="checkbox" id="chk-starttime"> Jam Mulai</label>
+          <label class="chk-label"><input type="checkbox" id="chk-finishfast"> Selesaikan Cepat</label>
+          <label class="chk-label" style="color: var(--sage-dark); font-weight: 500;"><input type="checkbox" id="chk-routine"> Rutinitas</label>
+        </div>
+        <div class="form-row" style="margin-top: 16px;">
+          <button id="btn-cancel-edit-cat" class="btn-secondary" style="display: none; flex-grow: 1;">Batal Edit</button>
+          <button id="btn-save-cat" class="btn-primary" style="flex-grow: 2;">Simpan Kategori</button>
+        </div>
+      </div>
 
-.search-input, .search-date { padding: 10px 12px; border: 1px solid var(--sage-light); border-radius: 10px; font-size: 12px; outline: none; background: rgba(255,255,255,0.8); color: var(--sage-dark); font-family: 'Poppins', sans-serif; transition: border 0.2s;}
-.search-input { width: 220px; }
-.search-date { cursor: pointer; }
-.search-input:focus, .search-date:focus { border-color: var(--sage-primary); }
+      <hr style="border: 0; border-top: 1px dashed var(--sage-light); margin: 24px 0;">
+      <h4>Kategori Tersimpan</h4>
+      <ul id="list-categories" class="settings-list"></ul>
+    </div>
+  </div>
 
-.btn-primary { background-color: var(--sage-primary); color: var(--white); border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background 0.2s; white-space: nowrap; }
-.btn-primary:hover { background-color: var(--sage-dark); }
-.btn-secondary { background-color: transparent; color: var(--text-muted); border: 1px solid var(--sage-dark); padding: 10px 20px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 500; }
+  <!-- Modal Pengaturan Jadwal Mingguan -->
+  <div id="modal-schedule" class="modal">
+    <div class="modal-content glass-panel" style="max-height: 85vh; overflow-y: auto; max-width: 480px;">
+      <div class="modal-header">
+        <h3>Atur Jadwal Pelajaran</h3>
+        <button class="btn-close-modal"><i class="ph ph-x"></i></button>
+      </div>
+      
+      <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.4;">Atur secara manual dengan mencentang hari di bawah ini untuk mengaktifkan fitur deadline otomatis:</p>
+      <div id="schedule-matrix" style="display: flex; flex-direction: column; gap: 12px;"></div>
+      
+      <div class="modal-actions" style="margin-top: 20px;">
+        <button id="btn-save-schedule" class="btn-primary" style="width: 100%;">Simpan Jadwal</button>
+      </div>
+    </div>
+  </div>
 
-.task-container { display: flex; flex-direction: column; gap: 12px; }
-.task-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(8px); padding: 16px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.03); transition: transform 0.2s; border: 1px solid rgba(255,255,255,0.6); position: relative; overflow: hidden;}
-.task-card:hover { transform: translateY(-2px); border-color: var(--sage-light); }
-.task-card.completed { opacity: 0.5; }
-.task-card.completed h3 { text-decoration: line-through; color: var(--text-muted); }
-.task-card.is-pinned::before { content: ''; position: absolute; left: 0; top: 0; width: 4px; height: 100%; background: var(--sage-primary); border-radius: 4px 0 0 4px;}
-
-.task-info { display: flex; gap: 16px; align-items: flex-start; width: 100%; }
-.task-checkbox { width: 20px; height: 20px; accent-color: var(--sage-primary); cursor: pointer; margin-top: 2px; }
-.task-details { display: flex; flex-direction: column; width: 100%; }
-.task-details h3 { font-size: 15px; margin-bottom: 6px; font-weight: 600; }
-
-.task-meta { display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
-.meta-schedule { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-muted); }
-.meta-row { display: flex; align-items: center; gap: 6px; }
-.meta-badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.meta-badges span { background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 6px; font-weight: 500; border: 1px solid rgba(0,0,0,0.05); font-size: 11px;}
-.badge-cat { background: var(--sage-light) !important; color: var(--sage-dark) !important; font-weight: 600 !important; display: flex; align-items: center; gap: 4px; }
-.badge-routine { background: rgba(138, 158, 134, 0.15) !important; color: var(--sage-dark) !important; border: 1px dashed var(--sage-primary) !important; display: flex; align-items: center; gap: 4px; }
-
-textarea { resize: vertical; padding: 10px; border: 1px solid var(--sage-light); border-radius: 8px; font-size: 13px; outline: none; background: rgba(255,255,255,0.8); }
-textarea:focus { border-color: var(--sage-primary); }
-.notes-display { font-size: 12px; color: var(--sage-dark); background: rgba(138, 158, 134, 0.1); padding: 10px 14px; border-radius: 8px; margin-top: 6px; font-style: italic; border-left: 3px solid var(--sage-primary); white-space: pre-wrap; line-height: 1.5; }
-
-.task-actions { display: flex; gap: 6px; align-items: center; margin-left: 12px; flex-shrink: 0; }
-.btn-finish { background: var(--sage-light); color: var(--sage-dark); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 4px; }
-.btn-finish:hover { background: var(--sage-primary); color: var(--white); }
-
-.btn-pin-task, .btn-edit-task, .btn-delete-task { background: transparent; border: 1px solid rgba(138, 158, 134, 0.4); color: var(--sage-dark); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-.btn-pin-task:hover, .btn-edit-task:hover { background: var(--sage-light); color: var(--text-main); }
-.btn-pin-task.active { background: rgba(138, 158, 134, 0.2); color: var(--sage-primary); border-color: var(--sage-primary); }
-.btn-delete-task { background: #ffecec; border-color: #ffdcdc; color: #d9534f; }
-.btn-delete-task:hover { background: #d9534f; color: white; }
-
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3); justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(6px); }
-.modal.active { display: flex; }
-.modal-content { padding: 24px; border-radius: 20px; width: 100%; max-width: 420px; }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--sage-light); padding-bottom: 12px; }
-.modal-header h3 { font-size: 18px; color: var(--sage-dark); margin: 0; }
-.btn-close-modal { background: transparent; border: none; font-size: 22px; color: var(--text-muted); cursor: pointer; transition: color 0.2s; display: flex; align-items: center; justify-content: center; }
-.btn-close-modal:hover { color: #d9534f; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
-
-.icon-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
-.icon-option { font-size: 20px; padding: 8px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; color: var(--text-muted); transition: 0.2s; display: flex; align-items: center; justify-content: center; }
-.icon-option:hover { background: rgba(138, 158, 134, 0.2); }
-.icon-option.selected { border-color: var(--sage-primary); color: var(--sage-primary); background: rgba(138, 158, 134, 0.15); box-shadow: 0 2px 8px rgba(138,158,134,0.3); }
-
-.settings-form { background: rgba(255,255,255,0.5); padding: 16px; border-radius: 12px; border: 1px solid var(--sage-light); }
-.checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
-.chk-label { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-main); cursor: pointer; }
-.chk-label input { width: 16px; height: 16px; accent-color: var(--sage-primary); cursor: pointer; }
-.settings-list { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-top: 12px;}
-.settings-list li { background: rgba(255,255,255,0.8); padding: 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: flex-start; }
-.cat-info h5 { font-size: 13px; color: var(--sage-dark); margin-bottom: 2px; display: flex; align-items: center; gap: 6px;}
-.cat-info p { font-size: 10px; color: var(--text-muted); line-height: 1.4; }
-.cat-actions { display: flex; gap: 4px; }
-.btn-edit-cat, .btn-del-cat { width: 28px; height: 28px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
-.btn-edit-cat { background: rgba(138, 158, 134, 0.2); color: var(--sage-dark); }
-.btn-edit-cat:hover { background: var(--sage-primary); color: white; }
-.btn-del-cat { background: #ffecec; color: #d9534f; }
-.btn-del-cat:hover { background: #d9534f; color: white; }
-
-.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
-.stat-card { background: rgba(255,255,255,0.7); border: 1px solid var(--sage-light); padding: 16px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: 0.2s;}
-.stat-card:hover { transform: translateY(-2px); border-color: var(--sage-primary);}
-.stat-card h4 { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;}
-.stat-card .num { font-size: 28px; color: var(--sage-dark); font-weight: 600; line-height: 1; }
-.stat-details { font-size: 11px; color: var(--text-muted); margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--glass-border); }
-
-/* MOBILE RESPONSIVE UI */
-@media (max-width: 768px) {
-  body { font-size: 12px; }
-  .sidebar { position: fixed; top: 0; left: 0; height: 100vh; box-shadow: 4px 0 20px rgba(0,0,0,0.15); }
-  
-  /* Layout Mobile kembali rapi */
-  .content { margin-left: 72px; width: calc(100vw - 72px); padding: 16px; height: 100vh; overflow-y: auto;}
-  .content-wrapper { padding-bottom: 80px; }
-
-  .main-header { flex-direction: column; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
-  .header-actions { width: 100%; display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; }
-  .search-input, .search-date { flex-grow: 1; width: calc(50% - 4px); max-width: none; }
-  .btn-primary { width: 100%; }
-  
-  .task-card { padding: 12px; align-items: flex-start; flex-direction: column; }
-  .task-info { align-items: flex-start; gap: 10px; width: 100%;}
-  .task-details h3 { font-size: 14px; line-height: 1.3; }
-  .meta-schedule { font-size: 11px; }
-  .meta-badges span { font-size: 10px; padding: 3px 6px; }
-  .notes-display { font-size: 11px; padding: 8px 10px; margin-top: 8px; }
-  .task-actions { width: 100%; justify-content: flex-end; margin-top: 8px; margin-left: 0; border-top: 1px dashed rgba(0,0,0,0.05); padding-top: 10px; }
-  .btn-edit-task, .btn-delete-task, .btn-pin-task { width: 28px; height: 28px; }
-  .modal-content { padding: 16px; max-width: 92%; max-height: 90vh; overflow-y: auto;}
-  .input-group { margin-bottom: 8px; }
-  .input-group label { font-size: 9px; margin-bottom: 2px; }
-  .input-group input, .input-group select, textarea { font-size: 11px; padding: 8px; border-radius: 6px; }
-  .checkbox-grid { grid-template-columns: 1fr; gap: 6px; margin-bottom: 12px;}
-  .chk-label { font-size: 11px; }
-  .dashboard-grid { grid-template-columns: 1fr; }
-}
-/* Mengubah warna highlight saat teks diblok di seluruh halaman */
-::selection {
-  background-color: var(--sage-primary);
-  color: var(--white);
-}
-
-::-moz-selection {
-  background-color: var(--sage-primary);
-  color: var(--white);
-}
-/* Menghilangkan gaya bawaan browser pada dropdown <select> */
-select {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7d68' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 16px;
-  padding-right: 32px !important;
-  cursor: pointer;
-}
-
-/* Mengubah warna item pilihan saat dropdown dibuka */
-select option {
-  background-color: var(--white);
-  color: var(--text-main);
-  padding: 8px;
-}
-
-select option:checked {
-  background-color: var(--sage-light) !important;
-  color: var(--sage-dark) !important;
-}
-/* Custom Checkbox */
-input[type="checkbox"] {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--sage-light);
-  border-radius: 6px;
-  outline: none;
-  cursor: pointer;
-  background-color: rgba(255, 255, 255, 0.8);
-  transition: all 0.2s var(--ease-smooth);
-  display: grid;
-  place-content: center;
-}
-
-input[type="checkbox"]:checked {
-  background-color: var(--sage-primary);
-  border-color: var(--sage-primary);
-}
-
-input[type="checkbox"]:checked::before {
-  content: "✓";
-  color: var(--white);
-  font-size: 12px;
-  font-weight: bold;
-}
+  <script type="module" src="app.js"></script>
+</body>
+</html>
