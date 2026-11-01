@@ -2,9 +2,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// ============================================================================
-// Ganti email di bawah ini dengan email Super Admin yang baru kamu buat!
-// ============================================================================
 const SUPER_ADMIN_EMAIL = "superadmin@codepall.com";
 
 const firebaseConfig = {
@@ -16,15 +13,12 @@ const firebaseConfig = {
   appId: "1:603325028994:web:b6b123f304d8a69d32b29b"
 };
 
-// Instance KHUSUS Admin agar tidak terjadi tabrakan login dengan tab Aplikasi Utama
+// INSTANCE KHUSUS ADMIN (Otentikasi & Database menyatu agar bisa membaca data)
 const adminApp = initializeApp(firebaseConfig, "AdminPortalApp");
 const auth = getAuth(adminApp);
+const db = getFirestore(adminApp);
 
-// Instance Default untuk mengakses database (Firestore)
-const defaultApp = initializeApp(firebaseConfig);
-const db = getFirestore(defaultApp);
-
-// Instance Ketiga khusus untuk membuat user baru di latar belakang tanpa menimpa login saat ini
+// Instance untuk membuat akun baru tanpa menimpa login
 const secondaryApp = initializeApp(firebaseConfig, "secondaryAuthApp");
 const secondaryAuth = getAuth(secondaryApp);
 
@@ -69,7 +63,6 @@ document.getElementById('btn-admin-login').addEventListener('click', async () =>
 document.getElementById('btn-admin-logout').addEventListener('click', () => {
   signOut(auth);
 });
-
 
 document.getElementById('btn-create-user').addEventListener('click', async () => {
   const emailInput = document.getElementById('new-user-email');
@@ -144,6 +137,8 @@ document.getElementById('btn-create-user').addEventListener('click', async () =>
 
 function loadManagedUsers() {
   const tbody = document.getElementById('user-table-body');
+  
+  // Menambahkan error handling agar sistem tidak diam saja jika ada masalah rules database
   onSnapshot(collection(db, "managed_users"), (snapshot) => {
     tbody.innerHTML = '';
     if (snapshot.empty) {
@@ -172,5 +167,7 @@ function loadManagedUsers() {
 
       tbody.appendChild(tr);
     });
+  }, (error) => {
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #d9534f;">Gagal memuat data: ${error.message}</td></tr>`;
   });
 }
