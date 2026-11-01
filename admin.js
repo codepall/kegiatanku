@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const SUPER_ADMIN_EMAIL = "superadmin@codepall.com";
 
@@ -13,15 +13,17 @@ const firebaseConfig = {
   appId: "1:603325028994:web:b6b123f304d8a69d32b29b"
 };
 
-// INSTANCE KHUSUS ADMIN (Otentikasi & Database menyatu agar bisa membaca data)
+// Instance Khusus Admin agar terpisah dari sesi login web utama
 const adminApp = initializeApp(firebaseConfig, "AdminPortalApp");
 const auth = getAuth(adminApp);
 const db = getFirestore(adminApp);
 
-// Instance untuk membuat akun baru tanpa menimpa login
+// Instance Sekunder untuk membuat akun baru tanpa mengeluarkan sesi Super Admin
 const secondaryApp = initializeApp(firebaseConfig, "secondaryAuthApp");
 const secondaryAuth = getAuth(secondaryApp);
 
+let currentAdminUser = null;
+let managedUsersList = [];
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
@@ -33,10 +35,12 @@ onAuthStateChanged(auth, async (user) => {
       document.getElementById('admin-panel-screen').style.display = 'none';
       return;
     }
+    currentAdminUser = user;
     document.getElementById('admin-login-screen').style.display = 'none';
     document.getElementById('admin-panel-screen').style.display = 'block';
     loadManagedUsers();
   } else {
+    currentAdminUser = null;
     document.getElementById('admin-login-screen').style.display = 'flex';
     document.getElementById('admin-panel-screen').style.display = 'none';
   }
@@ -56,7 +60,7 @@ document.getElementById('btn-admin-login').addEventListener('click', async () =>
   try {
     await signInWithEmailAndPassword(auth, email, password);
   } catch (error) {
-    errEl.textContent = "Login Gagal: Password salah atau akun belum dibuat di Firebase Console.";
+    errEl.textContent = "Login Gagal: Periksa kembali email dan password Super Admin.";
   }
 });
 
@@ -64,13 +68,14 @@ document.getElementById('btn-admin-logout').addEventListener('click', () => {
   signOut(auth);
 });
 
+// Buat Akun Baru atau Tautkan Akun Lama ke Tabel Kelola
 document.getElementById('btn-create-user').addEventListener('click', async () => {
   const emailInput = document.getElementById('new-user-email');
   const passwordInput = document.getElementById('new-user-password');
   const statusEl = document.getElementById('create-user-status');
   const btn = document.getElementById('btn-create-user');
 
-  const email = emailInput.value.trim();
+  const email = emailInput.value.trim().toLowerCase();
   const password = passwordInput.value.trim();
 
   if (!email || !password) {
@@ -89,7 +94,7 @@ document.getElementById('btn-create-user').addEventListener('click', async () =>
   statusEl.textContent = "";
 
   try {
-    let createdUid = "";
+    let createdUid = "existing-user";
     let isExistingAccount = false;
 
     try {
@@ -104,21 +109,35 @@ document.getElementById('btn-create-user').addEventListener('click', async () =>
       }
     }
 
-    const existingCheck = await getDocs(query(collection(db, "managed_users"), where("email", "==", email)));
-    if (!existingCheck.empty) {
-      statusEl.textContent = `Akun ${email} sudah ada di dalam tabel kelola!`;
+    // Cek apakah email sudah ada di daftar kelola
+    const alreadyExists = managedUsersList.some(u => u.email.toLowerCase() === email);
+    if (alreadyExists) {
+      statusEl.textContent = `Akun ${email} sudah terdaftar di dalam tabel di bawah!`;
       statusEl.style.color = "var(--sage-dark)";
       return;
     }
 
-    await addDoc(collection(db, "managed_users"), {
-      uid: createdUid || "existing-user",
+    const newEntry = {
+      id: Date.now().toString(),
+      uid: createdUid,
       email: email,
       createdAt: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+    };
+
+    const updatedList = [...managedUsersList, newEntry];
+
+    // Simpan ke dokumen userSettings milik Super Admin (Bebas Error Permission!)
+    const adminDocRef = doc(db, "userSettings", currentAdminUser.uid);
+    const snap = await getDoc(adminDocRef);
+    const existingData = snap.exists() ? snap.data() : {};
+
+    await setDoc(adminDocRef, {
+      ...existingData,
+      managedUsers: updatedList
     });
 
     if (isExistingAccount) {
-      statusEl.textContent = `Akun lama (${email}) berhasil ditautkan ke tabel kelola!`;
+      statusEl.textContent = `Akun lama (${email}) berhasil ditautkan ke daftar kelola!`;
     } else {
       statusEl.textContent = `Akun baru (${email}) berhasil dibuat dan siap digunakan!`;
     }
@@ -135,25 +154,28 @@ document.getElementById('btn-create-user').addEventListener('click', async () =>
   }
 });
 
+// Memuat Daftar Pengguna dari Dokumen userSettings Super Admin
 function loadManagedUsers() {
+  if (!currentAdminUser) return;
   const tbody = document.getElementById('user-table-body');
-  
-  // Menambahkan error handling agar sistem tidak diam saja jika ada masalah rules database
-  onSnapshot(collection(db, "managed_users"), (snapshot) => {
+  const adminDocRef = doc(db, "userSettings", currentAdminUser.uid);
+
+  onSnapshot(adminDocRef, (docSnap) => {
     tbody.innerHTML = '';
-    if (snapshot.empty) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Belum ada user yang ditambahkan ke panel ini.</td></tr>';
+    managedUsersList = (docSnap.exists() && docSnap.data().managedUsers) ? docSnap.data().managedUsers : [];
+
+    if (managedUsersList.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Belum ada akun di daftar kelola. Ketik email akunmu di form atas untuk menautkannya.</td></tr>';
       return;
     }
 
-    snapshot.forEach((docSnap) => {
-      const u = docSnap.data();
+    managedUsersList.forEach((u) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td><strong>${u.email}</strong></td>
         <td>${u.createdAt || '-'}</td>
         <td>
-          <button class="btn-del-record" data-id="${docSnap.id}" style="background: #ffecec; border: 1px solid #ffdcdc; color: #d9534f; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 11px;">
+          <button class="btn-del-record" data-id="${u.id}" style="background: #ffecec; border: 1px solid #ffdcdc; color: #d9534f; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 11px;">
             Hapus dari Tabel
           </button>
         </td>
@@ -161,7 +183,10 @@ function loadManagedUsers() {
 
       tr.querySelector('.btn-del-record').addEventListener('click', async () => {
         if (confirm(`Hapus catatan kelola untuk ${u.email}?`)) {
-          await deleteDoc(doc(db, "managed_users", docSnap.id));
+          const filtered = managedUsersList.filter(item => item.id !== u.id);
+          const snap = await getDoc(adminDocRef);
+          const existingData = snap.exists() ? snap.data() : {};
+          await setDoc(adminDocRef, { ...existingData, managedUsers: filtered });
         }
       });
 
