@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, deleteDoc, doc, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDPsRwRf72xaQkSdGn89WdwA3sbJI2Z-z0",
@@ -15,23 +15,11 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Data default kategori sudah disesuaikan dengan daftar Organisasi
 let userCategories = [
-  { 
-    name: "Organisasi", 
-    icon: "ph-users", 
-    subs: ["PMR", "OSIS", "ROHIS", "Kader Bank Sampah", "Kader Keamanan Pangan", "Kader Kawasan Tanpa Rokok", "Kader Jumantik"], 
-    longDate: true, timeRange: true, deadline: false, startTime: false, finishFast: false, routine: false 
-  },
-  { 
-    name: "PR", 
-    icon: "ph-book-open", 
-    subs: ["BIN", "BK", "BIG", "IPS", "PPKn", "Informatika", "IPA", "MAT", "BJ", "SB", "PAI", "PJOK"], 
-    longDate: false, timeRange: false, deadline: true, startTime: false, finishFast: false, routine: false 
-  }
+  { name: "Organisasi", icon: "ph-users", subs: ["PMR", "OSIS", "ROHIS", "Kader Bank Sampah", "Kader Keamanan Pangan", "Kader Kawasan Tanpa Rokok", "Kader Jumantik"], longDate: true, timeRange: true, deadline: false, startTime: false, finishFast: false, routine: false },
+  { name: "PR", icon: "ph-book-open", subs: ["BIN", "BK", "BIG", "IPS", "PPKn", "Informatika", "IPA", "MAT", "BJ", "SB", "PAI", "PJOK"], longDate: false, timeRange: false, deadline: true, startTime: false, finishFast: false, routine: false }
 ];
 let userSchedule = {}; 
-
 let currentUser = null;
 let allTasks = [];
 let currentFilter = { type: 'status', value: 'all', text: '' }; 
@@ -126,11 +114,7 @@ async function checkAutoResets(tasks) {
 
       if (shouldReset) {
         await updateDoc(doc(db, "tasks", t.id), {
-          completed: false,
-          lastCompletedAt: null,
-          notified: false,
-          notified_hmin1: false,
-          notified_hday: false
+          completed: false, lastCompletedAt: null, notified: false, notified_hmin1: false, notified_hday: false
         });
       }
     }
@@ -176,7 +160,6 @@ document.getElementById('sidebar-nav').addEventListener('click', (e) => {
     document.getElementById('dashboard-view').style.display = 'none';
     renderTasksUI();
   }
-
   document.getElementById('sidebar').classList.add('minimized');
   document.getElementById('sidebar-overlay').classList.remove('active');
 });
@@ -196,7 +179,6 @@ document.getElementById('search-date-input').addEventListener('change', (e) => {
 
 document.getElementById('search-text-input').addEventListener('input', (e) => {
   currentFilter.text = e.target.value.toLowerCase();
-  
   if(currentFilter.type === 'dashboard') {
     document.getElementById('sidebar-nav').querySelector('[data-value="all"]').click();
   } else {
@@ -225,7 +207,7 @@ async function saveUserSettings() {
 }
 
 function applyCategoriesToUI() {
-  document.getElementById('input-category').innerHTML = userCategories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+  renderMainCategoryDropdown();
   
   document.getElementById('dynamic-categories-sidebar').innerHTML = userCategories.map(c => `
     <li class="nav-item" data-filter="category" data-value="${c.name}">
@@ -257,10 +239,8 @@ function updateCounters() {
   
   const elAll = document.getElementById('count-all');
   if(elAll) elAll.textContent = allTasks.length;
-  
   const elPending = document.getElementById('count-pending');
   if(elPending) elPending.textContent = pending;
-  
   const elComp = document.getElementById('count-completed');
   if(elComp) elComp.textContent = completed;
 
@@ -376,6 +356,35 @@ document.getElementById('btn-save-schedule').addEventListener('click', async () 
   btn.textContent = "Simpan Jadwal";
 });
 
+// LOGIKA RENDER CUSTOM DROPDOWN MAIN KATEGORI
+function renderMainCategoryDropdown() {
+  const menu = document.getElementById('main-category-options');
+  const label = document.getElementById('main-category-label');
+  const hiddenInput = document.getElementById('input-category');
+  
+  if(!menu) return;
+  menu.innerHTML = '';
+  
+  let currentSelection = hiddenInput.value || (userCategories.length > 0 ? userCategories[0].name : '');
+  hiddenInput.value = currentSelection;
+  label.textContent = currentSelection || 'Pilih Kategori';
+  
+  userCategories.forEach(cat => {
+    const item = document.createElement('div');
+    item.className = `dropdown-item ${cat.name === currentSelection ? 'selected' : ''}`;
+    item.innerHTML = `<span>${cat.name}</span> ${cat.name === currentSelection ? '<i class="ph ph-check"></i>' : ''}`;
+    
+    item.addEventListener('click', () => {
+      hiddenInput.value = cat.name;
+      label.textContent = cat.name;
+      document.getElementById('dropdown-main-category').classList.remove('open');
+      renderMainCategoryDropdown();
+      updateFormInputs();
+    });
+    menu.appendChild(item);
+  });
+}
+
 // LOGIKA RENDER CUSTOM DROPDOWN SUB KATEGORI
 function renderCustomSubDropdown(subs, activeVal = '') {
   const menu = document.getElementById('sub-category-options');
@@ -396,33 +405,35 @@ function renderCustomSubDropdown(subs, activeVal = '') {
     item.addEventListener('click', () => {
       hiddenInput.value = sub;
       label.textContent = sub;
-      menu.querySelectorAll('.dropdown-item').forEach(el => {
-        el.classList.remove('selected');
-        const icon = el.querySelector('i');
-        if(icon) icon.remove();
-      });
-      item.classList.add('selected');
-      item.insertAdjacentHTML('beforeend', '<i class="ph ph-check"></i>');
       document.getElementById('dropdown-sub-category').classList.remove('open');
+      renderCustomSubDropdown(subs, sub);
     });
     
     menu.appendChild(item);
   });
 }
 
-// Buka/Tutup Custom Dropdown
-document.getElementById('sub-category-trigger').addEventListener('click', (e) => {
+// BUKA/TUTUP DROPDOWN KUSTOM
+document.getElementById('main-category-trigger')?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  document.getElementById('dropdown-main-category').classList.toggle('open');
+  document.getElementById('dropdown-sub-category').classList.remove('open');
+});
+document.getElementById('sub-category-trigger')?.addEventListener('click', (e) => {
   e.stopPropagation();
   document.getElementById('dropdown-sub-category').classList.toggle('open');
+  document.getElementById('dropdown-main-category').classList.remove('open');
 });
-
 document.addEventListener('click', (e) => {
-  const dd = document.getElementById('dropdown-sub-category');
-  if (dd && !dd.contains(e.target)) dd.classList.remove('open');
+  const ddMain = document.getElementById('dropdown-main-category');
+  const ddSub = document.getElementById('dropdown-sub-category');
+  if (ddMain && !ddMain.contains(e.target)) ddMain.classList.remove('open');
+  if (ddSub && !ddSub.contains(e.target)) ddSub.classList.remove('open');
 });
 
 function updateFormInputs(selectedSubVal = '') {
-  const cat = userCategories.find(c => c.name === document.getElementById('input-category').value);
+  const catName = document.getElementById('input-category').value;
+  const cat = userCategories.find(c => c.name === catName);
   if(!cat) return;
 
   const fSub = document.getElementById('field-sub-category');
@@ -470,12 +481,11 @@ function updateFormInputs(selectedSubVal = '') {
   }
 }
 
-document.getElementById('input-category').addEventListener('change', () => updateFormInputs());
 document.getElementById('val-pr-deadline-type').addEventListener('change', (e) => {
   document.getElementById('field-deadline').style.display = (e.target.value === 'khusus') ? 'flex' : 'none';
 });
 
-// OTENTIKASI USER BIASA
+// OTENTIKASI & SINKRONISASI AKUN LAMA KE ADMIN
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
@@ -485,6 +495,19 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('user-name').textContent = dName.charAt(0).toUpperCase() + dName.slice(1);
     document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${dName}&background=8a9e86&color=fff&bold=true`;
     
+    // MENDETEKSI & MEMASUKKAN AKUN INI KE ADMIN PANEL
+    try {
+      const q = query(collection(db, "managed_users"), where("email", "==", user.email));
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        await addDoc(collection(db, "managed_users"), {
+          uid: user.uid,
+          email: user.email,
+          createdAt: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+        });
+      }
+    } catch(e) {}
+    
     await loadUserSettings();
     fetchTasksFromDB();
     startNotificationChecker();
@@ -493,7 +516,6 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-// EVENT TOMBOL LOGOUT RESMI
 document.getElementById('btn-logout').addEventListener('click', async () => {
   if (confirm("Apakah kamu yakin ingin keluar dari akun?")) {
     await signOut(auth);
@@ -571,7 +593,9 @@ document.getElementById('btn-add-task').addEventListener('click', () => {
   document.getElementById('val-routine-type').value = '';
 
   if(userCategories.length > 0) { 
-    document.getElementById('input-category').value = userCategories[0].name; 
+    document.getElementById('input-category').value = userCategories[0].name;
+    document.getElementById('main-category-label').textContent = userCategories[0].name;
+    renderMainCategoryDropdown();
     updateFormInputs(); 
   }
   document.getElementById('modal').classList.add('active');
@@ -821,7 +845,11 @@ function renderTasksUI() {
       
       document.getElementById('input-title').value = task.title;
       document.getElementById('input-notes').value = task.notes || '';
+      
+      // Update UI untuk Custom Main Category
       document.getElementById('input-category').value = task.category;
+      document.getElementById('main-category-label').textContent = task.category;
+      renderMainCategoryDropdown();
       
       updateFormInputs(task.subCategory || ''); 
 
